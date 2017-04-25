@@ -25,6 +25,7 @@ Decode::Decode(std::string DataFileName, int userNumberOfEvents) {
     }
     DataFileName.erase(dotPosition, DataFileName.length());
     DataFileName = DataFileName + ".root";
+    ROOTFileName = DataFileName;
     ROOTFile = new TFile(DataFileName.c_str(), "RECREATE");
   }
 
@@ -41,6 +42,10 @@ Decode::~Decode() {
   if (DataFile != 0) {
     fclose(DataFile);
   }
+}
+
+std::string Decode::GetROOTFileName() {
+  return ROOTFileName;
 }
 
 void Decode::Run() {

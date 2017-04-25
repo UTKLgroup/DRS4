@@ -47,6 +47,7 @@ public:
   Decode(std::string DataFileName, int userNumberOfEvents);
   virtual ~Decode();
   void Run();
+  std::string GetROOTFileName();
 
 private:
   void AccessTimeHeader();
@@ -54,6 +55,7 @@ private:
 
   TFile*          ROOTFile;
   FILE*           DataFile;
+  std::string     ROOTFileName;
 
   unsigned int    NumberOfEvents;
   bool            DecodeAllEventsFlag;
