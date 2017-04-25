@@ -3,8 +3,8 @@
   Current version developed by:     UTKL HEP group <The University of Texas at Austin>
 */
 
-#ifndef DRS4DECODE_H
-#define DRS4DECODE_H
+#ifndef Decode_H
+#define Decode_H
 
 #include <iostream>
 #include <cstring>
@@ -42,11 +42,11 @@ struct WAVEFORM {
   double Time[4][1024];
 };
 
-class DRS4Decode {
+class Decode {
 public:
-  DRS4Decode(std::string DataFileName, int userNumberOfEvents);
-  virtual ~DRS4Decode();
-  void Decode();
+  Decode(std::string DataFileName, int userNumberOfEvents);
+  virtual ~Decode();
+  void Run();
 
 private:
   void AccessTimeHeader();

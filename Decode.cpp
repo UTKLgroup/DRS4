@@ -3,11 +3,11 @@
    Current version developed by:     UTKL HEP group <The University of Texas at Austin>
  */
 
-#include "DRS4Decode.h"
+#include "Decode.h"
 
 struct stat statbuf;
 
-DRS4Decode::DRS4Decode(std::string DataFileName, int userNumberOfEvents) {
+Decode::Decode(std::string DataFileName, int userNumberOfEvents) {
   std::cout << std::endl;
 
   if (stat(DataFileName.c_str(), &statbuf) == -1) {
@@ -37,13 +37,13 @@ DRS4Decode::DRS4Decode(std::string DataFileName, int userNumberOfEvents) {
   }
 }
 
-DRS4Decode::~DRS4Decode() {
+Decode::~Decode() {
   if (DataFile != 0) {
     fclose(DataFile);
   }
 }
 
-void DRS4Decode::Decode() {
+void Decode::Run() {
   if (DataFile != 0 && NumberOfEvents != 0) {
     if (DecodeAllEventsFlag) {
       std::cout << "You chose to decode all events." << std::endl;
@@ -58,7 +58,7 @@ void DRS4Decode::Decode() {
   return;
 }
 
-void DRS4Decode::AccessTimeHeader() {
+void Decode::AccessTimeHeader() {
   fread(&TimeHeader, sizeof(TimeHeader), 1, DataFile);
   std::cout << "Found data for board number " << TimeHeader.BoardSerialNumber << "." << std::endl << std::endl;
 
@@ -79,7 +79,7 @@ void DRS4Decode::AccessTimeHeader() {
   return;
 }
 
-void DRS4Decode::AccessEventHeader() {
+void Decode::AccessEventHeader() {
   WAVEFORM tmpWaveform;
   TTree* DataTree = new TTree("DataTree", "DataTree");
   DataTree->Branch("TimeChannel1", tmpWaveform.Time[0], "TimeChannel1[1024]/D");
