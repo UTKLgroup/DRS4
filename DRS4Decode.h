@@ -7,21 +7,21 @@
 #define DRS4DECODE_H
 
 #include <iostream>
-#include <vector>
-#include <array>
-#include <algorithm>
-#include <cstring>
+#include <string>
+#include <sys/stat.h>
+
+#include <TFile.h>
 
 class DRS4Decode {
 public:
   DRS4Decode();
   DRS4Decode(std::string aDataFileName);
   virtual ~DRS4Decode();
-  void PrintFileName();
 
 private:
-  std::string DataFileName;
-  std::string ROOTFileName;
+  std::string ROOTFile;
+  FILE*       DataFile;
+
 };
 
 #endif
