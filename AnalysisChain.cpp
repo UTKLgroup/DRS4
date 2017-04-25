@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "DRS4Decode.h"
+#include "Decode.h"
 
 int main(int argc, char *argv[]) {
 
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     std::stringstream ss(argv[2]);
     int NumberOfEvents;
     ss >> NumberOfEvents;
-    DRS4Decode* DataSet1 = new DRS4Decode(argv[1], NumberOfEvents);
+    Decode* DataSet1 = new Decode(argv[1], NumberOfEvents);
     DataSet1->Decode();
   }
 

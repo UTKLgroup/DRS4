@@ -18,9 +18,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_definitions(-DDEBUG)
 
 #---Create a shared library with generated dictionary
-add_library(DRS4Decode DRS4Decode.cpp)
-target_link_libraries(DRS4Decode ${ROOT_LIBRARIES})
+add_library(Decode Decode.cpp)
+target_link_libraries(Decode ${ROOT_LIBRARIES})
 
 #---Create a main program using the library
 add_executable(AnalysisChain main.cpp)
-target_link_libraries(AnalysisChain DRS4Decode)
+target_link_libraries(AnalysisChain Decode)
