@@ -4,7 +4,7 @@ project(AnalysisChain)
 #---Compiler options control
 set (CMAKE_CXX_FLAGS "-g -w -std=c++11")
 
-# You need to tell CMake where to find the ROOT installation. 
+# You need to tell CMake where to find the ROOT installation.
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
@@ -12,12 +12,18 @@ find_package(ROOT REQUIRED COMPONENTS)
 include(${ROOT_USE_FILE})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-#---Define DEBUG compilation --- USER DEFINITION
-add_definitions(-DDEBUG)
+#---Define VERBOSE runtime --- USER DEFINITION
+option(VERBOSE "Verbose print mode" OFF)
+if(VERBOSE)
+  add_definitions(-DVerboseMode)
+endif(VERBOSE)
 
 #---Create a shared library with generated dictionary
+add_library(GSFilter SHARED GSFilter.cpp)
+target_link_libraries(GSFilter ${ROOT_LIBRARIES})
+
 add_library(Decode SHARED Decode.cpp)
-target_link_libraries(Decode ${ROOT_LIBRARIES})
+target_link_libraries(Decode GSFilter ${ROOT_LIBRARIES})
 
 add_library(Event SHARED Event.cpp)
 target_link_libraries(Event ${ROOT_LIBRARIES})

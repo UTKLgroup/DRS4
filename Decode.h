@@ -14,6 +14,8 @@
 #include <TFile.h>
 #include <TTree.h>
 
+#include "GSFilter.h"
+
 struct TIMEHEADER {
   char           TimeHeaderLabel[4];
   char           BoardSerialLabel[2];
@@ -48,6 +50,8 @@ public:
   virtual ~Decode();
   void Run();
   std::string GetROOTFileName();
+  void        SaveROOTFile();
+  void SetNoFilter();
 
 private:
   void AccessTimeHeader();
@@ -57,6 +61,9 @@ private:
   FILE*           DataFile;
   std::string     ROOTFileName;
 
+  GSFilter*       WaveformFilter;
+  bool            FilterFlag = true;
+
   unsigned int    NumberOfEvents;
   bool            DecodeAllEventsFlag;
   TIMEHEADER      TimeHeader;
@@ -65,6 +72,7 @@ private:
   char            Header[4];
   unsigned short  Voltage[1024];
   double          Waveform[4][1024];
+  double          FilteredWaveform[4][1024];
   double          Time[4][1024];
   float           TimeBinWidth[4][1024];
 };

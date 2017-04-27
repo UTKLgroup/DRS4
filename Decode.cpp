@@ -44,6 +44,11 @@ Decode::~Decode() {
   }
 }
 
+void Decode::SetNoFilter() {
+  FilterFlag = false;
+  return;
+}
+
 std::string Decode::GetROOTFileName() {
   return ROOTFileName;
 }
@@ -56,6 +61,14 @@ void Decode::Run() {
       std::cout << "You chose to decode " << NumberOfEvents <<  " events." << std::endl;
     }
     std::cout << std::endl;
+
+    if (FilterFlag) {
+      WaveformFilter = new GSFilter(7, 4);
+      #ifdef VerboseMode
+        WaveformFilter->PrintMatrices();
+      #endif
+    }
+
     AccessTimeHeader();
     AccessEventHeader();
   }
@@ -97,7 +110,7 @@ void Decode::AccessEventHeader() {
   DataTree->Branch("WaveformChannel4", tmpWaveform.Waveform[3], "WaveformChannel4[1024]/D");
 
   for (unsigned int EventID = 0; EventID < NumberOfEvents; EventID++) {
-    #ifdef DEBUG
+    #ifdef VerboseMode
       std::cout << "Event ID: " << EventID << "." << std::endl;
     #endif
     // Read event header
@@ -144,7 +157,11 @@ void Decode::AccessEventHeader() {
         Time[ChannelID][l] += DT;
       }
     }
-
+/*
+    if (FilterFlag) {
+      Waveform[ChannelID]
+    }
+*/
     for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
       std::copy(std::begin(Waveform[ChannelID]), std::end(Waveform[ChannelID]), std::begin(tmpWaveform.Waveform[ChannelID]));
       std::copy(std::begin(Time[ChannelID]), std::end(Time[ChannelID]), std::begin(tmpWaveform.Time[ChannelID]));

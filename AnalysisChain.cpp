@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include "Decode.h"
+#include "Event.h"
 
 int main(int argc, char *argv[]) {
 
@@ -15,9 +16,9 @@ int main(int argc, char *argv[]) {
     int NumberOfEvents;
     ss >> NumberOfEvents;
     Decode* DataSet1 = new Decode(argv[1], NumberOfEvents);
-    DataSet1->Decode();
+    DataSet1->Run();
     std::string ROOTFile = DataSet1->GetROOTFileName();
-    Event* EventDataSet1 = new Event()
+    Event* EventDataSet1 = new Event(ROOTFile);
   }
 
   return 0;

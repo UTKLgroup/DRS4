@@ -74,6 +74,6 @@ void Event::Loop() {
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
 
-    // if (Cut(ientry) < 0) continue;
+    if (Cut(ientry) < 0) continue;
   }
 }
