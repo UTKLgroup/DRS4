@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
     int NumberOfEvents;
     ss >> NumberOfEvents;
     Decode* DataSet1 = new Decode(argv[1], NumberOfEvents);
+    DataSet1->SetFilter(7, 3);
     DataSet1->Run();
     std::string ROOTFile = DataSet1->GetROOTFileName();
     Event* EventDataSet1 = new Event(ROOTFile);

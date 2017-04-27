@@ -26,7 +26,6 @@ Decode::Decode(std::string DataFileName, int userNumberOfEvents) {
     DataFileName.erase(dotPosition, DataFileName.length());
     DataFileName = DataFileName + ".root";
     ROOTFileName = DataFileName;
-    ROOTFile = new TFile(DataFileName.c_str(), "RECREATE");
   }
 
   if (userNumberOfEvents == -1) {
@@ -44,8 +43,14 @@ Decode::~Decode() {
   }
 }
 
-void Decode::SetNoFilter() {
-  FilterFlag = false;
+void Decode::SetFilter(unsigned int userNumberOfFilteringPoints, unsigned int userFilteringDegree) {
+  FilterFlag = true;
+  NumberOfFilteringPoints = userNumberOfFilteringPoints;
+  FilteringDegree = userFilteringDegree;
+
+  ROOTFileName.erase(ROOTFileName.length() - 5, ROOTFileName.length());
+  ROOTFileName = ROOTFileName + ".FilteredWaveform.root";
+
   return;
 }
 
@@ -63,7 +68,7 @@ void Decode::Run() {
     std::cout << std::endl;
 
     if (FilterFlag) {
-      WaveformFilter = new GSFilter(7, 4);
+      WaveformFilter = new GSFilter(NumberOfFilteringPoints, FilteringDegree);
       #ifdef VerboseMode
         WaveformFilter->PrintMatrices();
       #endif
@@ -71,6 +76,7 @@ void Decode::Run() {
 
     AccessTimeHeader();
     AccessEventHeader();
+    SaveROOTFile();
   }
 
   return;
@@ -98,16 +104,6 @@ void Decode::AccessTimeHeader() {
 }
 
 void Decode::AccessEventHeader() {
-  WAVEFORM tmpWaveform;
-  TTree* DataTree = new TTree("DataTree", "DataTree");
-  DataTree->Branch("TimeChannel1", tmpWaveform.Time[0], "TimeChannel1[1024]/D");
-  DataTree->Branch("TimeChannel2", tmpWaveform.Time[1], "TimeChannel2[1024]/D");
-  DataTree->Branch("TimeChannel3", tmpWaveform.Time[2], "TimeChannel3[1024]/D");
-  DataTree->Branch("TimeChannel4", tmpWaveform.Time[3], "TimeChannel4[1024]/D");
-  DataTree->Branch("WaveformChannel1", tmpWaveform.Waveform[0], "WaveformChannel1[1024]/D");
-  DataTree->Branch("WaveformChannel2", tmpWaveform.Waveform[1], "WaveformChannel2[1024]/D");
-  DataTree->Branch("WaveformChannel3", tmpWaveform.Waveform[2], "WaveformChannel3[1024]/D");
-  DataTree->Branch("WaveformChannel4", tmpWaveform.Waveform[3], "WaveformChannel4[1024]/D");
 
   for (unsigned int EventID = 0; EventID < NumberOfEvents; EventID++) {
     #ifdef VerboseMode
@@ -146,6 +142,10 @@ void Decode::AccessEventHeader() {
           Time[ChannelIndex][m] += TimeBinWidth[ChannelIndex][(j + EventHeader.TriggerCellValue) % 1024];
         }
       }
+
+      if (FilterFlag) {
+        WaveformFilter->Filter(&Waveform[ChannelID][0], &FilteredWaveform[ChannelID][0]);
+      }
     }
 
     // Align cell #0 of all channels
@@ -157,14 +157,36 @@ void Decode::AccessEventHeader() {
         Time[ChannelID][l] += DT;
       }
     }
-/*
+  }
+
+  return;
+}
+
+void Decode::SaveROOTFile() {
+  WAVEFORM tmpWaveform;
+
+  ROOTFile = new TFile(ROOTFileName.c_str(), "RECREATE");
+  TTree* DataTree = new TTree("DataTree", "DataTree");
+  DataTree->Branch("TimeChannel1", tmpWaveform.Time[0], "TimeChannel1[1024]/D");
+  DataTree->Branch("TimeChannel2", tmpWaveform.Time[1], "TimeChannel2[1024]/D");
+  DataTree->Branch("TimeChannel3", tmpWaveform.Time[2], "TimeChannel3[1024]/D");
+  DataTree->Branch("TimeChannel4", tmpWaveform.Time[3], "TimeChannel4[1024]/D");
+  DataTree->Branch("WaveformChannel1", tmpWaveform.Waveform[0], "WaveformChannel1[1024]/D");
+  DataTree->Branch("WaveformChannel2", tmpWaveform.Waveform[1], "WaveformChannel2[1024]/D");
+  DataTree->Branch("WaveformChannel3", tmpWaveform.Waveform[2], "WaveformChannel3[1024]/D");
+  DataTree->Branch("WaveformChannel4", tmpWaveform.Waveform[3], "WaveformChannel4[1024]/D");
+
+  for (unsigned int EventID = 0; EventID < NumberOfEvents; EventID++) {
     if (FilterFlag) {
-      Waveform[ChannelID]
-    }
-*/
-    for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
-      std::copy(std::begin(Waveform[ChannelID]), std::end(Waveform[ChannelID]), std::begin(tmpWaveform.Waveform[ChannelID]));
-      std::copy(std::begin(Time[ChannelID]), std::end(Time[ChannelID]), std::begin(tmpWaveform.Time[ChannelID]));
+      for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+        std::copy(std::begin(FilteredWaveform[ChannelID]), std::end(FilteredWaveform[ChannelID]), std::begin(tmpWaveform.Waveform[ChannelID]));
+        std::copy(std::begin(Time[ChannelID]), std::end(Time[ChannelID]), std::begin(tmpWaveform.Time[ChannelID]));
+      }
+    } else {
+      for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+        std::copy(std::begin(Waveform[ChannelID]), std::end(Waveform[ChannelID]), std::begin(tmpWaveform.Waveform[ChannelID]));
+        std::copy(std::begin(Time[ChannelID]), std::end(Time[ChannelID]), std::begin(tmpWaveform.Time[ChannelID]));
+      }
     }
 
     DataTree->Fill();

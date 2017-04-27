@@ -2,6 +2,7 @@
 #define GSFilter_h
 
 #include <cmath>
+#include <iomanip>
 #include <algorithm>
 #include <vector>
 #include <cstring>
@@ -19,10 +20,12 @@ public:
   GSFilter(unsigned int userNumberOfPoints, unsigned int userExtrapolationDegree);
   virtual  ~GSFilter();
   virtual void PrintMatrices();
+  virtual void Filter(double* Waveform, double* FilteredWaveform);
 
 private:
   virtual void CalculateJMatrix();
   virtual void CalculateCMatrix();
+  virtual void CalculateFuncSmoothingCoeffs();
   virtual void SetNumberOfPoints(unsigned int);
   virtual void SetExtrapolationDegree(unsigned int);
 
@@ -32,6 +35,7 @@ private:
   TMatrixD* JTransposeMatrix;
   TMatrixD* JJTransposeMatrix;
   TMatrixD* CMatrix;
+  double*   FuncSmoothingCoeffs;
 };
 
 #endif

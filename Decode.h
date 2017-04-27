@@ -51,7 +51,7 @@ public:
   void Run();
   std::string GetROOTFileName();
   void        SaveROOTFile();
-  void SetNoFilter();
+  void        SetFilter(unsigned int userNumberOfFilteringPoints, unsigned int userFilteringDegree);
 
 private:
   void AccessTimeHeader();
@@ -62,7 +62,9 @@ private:
   std::string     ROOTFileName;
 
   GSFilter*       WaveformFilter;
-  bool            FilterFlag = true;
+  bool            FilterFlag = false;
+  unsigned int    NumberOfFilteringPoints;
+  unsigned int    FilteringDegree;
 
   unsigned int    NumberOfEvents;
   bool            DecodeAllEventsFlag;

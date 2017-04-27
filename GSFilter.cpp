@@ -6,6 +6,7 @@ GSFilter::GSFilter(unsigned int userNumberOfPoints, unsigned int userExtrapolati
   SetNumberOfPoints(userNumberOfPoints);
   CalculateJMatrix();
   CalculateCMatrix();
+  CalculateFuncSmoothingCoeffs();
 }
 
 GSFilter::~GSFilter() {
@@ -15,15 +16,25 @@ void GSFilter::PrintMatrices() {
 
   std::cout << "\t The J matrix: " << std::endl;
   JMatrix->Print();
+  std::cout << std::endl;
 
   std::cout << "\t The J-transposed matrix: " << std::endl;
   JTransposeMatrix->Print();
+  std::cout << std::endl;
 
   std::cout << "\t The product of J and J-transposed matrices: " << std::endl;
   JJTransposeMatrix->Print();
+  std::cout << std::endl;
 
   std::cout << "The C matrix: " << std::endl;
   CMatrix->Print();
+  std::cout << std::endl;
+
+  std::cout << "The function smoothing coefficents using Golay-Savitzky filter are: " << std::endl;
+  for (unsigned int i = 0; i < NumberOfPoints; i++) {
+    std::cout << "a[" << i << "] = " << std::setw(12) << *(FuncSmoothingCoeffs + i) << "." << std::endl;
+  }
+  std::cout << std::endl;
 
   return;
 }
@@ -75,5 +86,29 @@ void GSFilter::CalculateCMatrix() {
   CMatrix = new TMatrixD(ExtrapolationDegree, NumberOfPoints);
   CMatrix->Mult(*JJTransposeMatrix, *JTransposeMatrix);
 
+  return;
+}
+
+void GSFilter::CalculateFuncSmoothingCoeffs() {
+  FuncSmoothingCoeffs = (double*) malloc(NumberOfPoints * sizeof(double));
+  CMatrix->ExtractRow(0, 0, FuncSmoothingCoeffs);
+
+  return;
+}
+
+void GSFilter::Filter(double* Waveform, double* FilteredWaveform) {
+  *(FilteredWaveform + 0) = *(Waveform + 0);
+  *(FilteredWaveform + 1) = *(Waveform + 1);
+  *(FilteredWaveform + 2) = *(Waveform + 2);
+  *(FilteredWaveform + 1021) = *(Waveform + 1021);
+  *(FilteredWaveform + 1022) = *(Waveform + 1022);
+  *(FilteredWaveform + 1023) = *(Waveform + 1023);
+  
+  for (unsigned int i = 3; i < 1021; i++) {
+    *(FilteredWaveform + i) = 0;
+    for (int j = -3; j < 4; j++) {
+      *(FilteredWaveform + i) += *(Waveform + i + j) * *(FuncSmoothingCoeffs + j + 3);
+    }
+  }
   return;
 }
