@@ -49,11 +49,8 @@ void Event::Init(TTree *tree) {
   fChain->SetBranchAddress("WaveformChannel4", WaveformChannel4, &b_WaveformChannel4);
 }
 
-Int_t Event::Cut(Long64_t entry) {
-  // This function may be called from Loop.
-  // returns  1 if entry is accepted.
-  // returns -1 otherwise.
-  return 1;
+bool Event::Cut(Long64_t entry) {
+  return true;
 }
 
 void Event::Loop() {
@@ -67,6 +64,6 @@ void Event::Loop() {
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
 
-    if (Cut(ientry) < 0) continue;
+    if (Cut(ientry)) continue;
   }
 }
