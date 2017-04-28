@@ -31,3 +31,16 @@ target_link_libraries(Event ${ROOT_LIBRARIES})
 #---Create a main program using the library
 add_executable(AnalysisChain AnalysisChain.cpp)
 target_link_libraries(AnalysisChain Decode Event)
+
+#---Copy data file over the build directory
+set(Example_DATA
+  example.bin
+)
+
+
+foreach(_data ${Example_DATA})
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/${_data}
+    ${PROJECT_BINARY_DIR}/${_data}
+  )
+endforeach()
