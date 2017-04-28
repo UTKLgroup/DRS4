@@ -77,6 +77,8 @@ private:
   double          FilteredWaveform[4][1024];
   double          Time[4][1024];
   float           TimeBinWidth[4][1024];
+
+  bool            DataFoundInChannel[4] = {false, false, false, false};
 };
 
 #endif

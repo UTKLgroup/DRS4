@@ -95,6 +95,7 @@ void Decode::AccessTimeHeader() {
     }
     int i = Header[3] - '0' - 1;
     std::cout << "\t - Found timing calibration for channel " << i + 1 << "." << std::endl;
+    DataFoundInChannel[i] = true;
     fread(&TimeBinWidth[i][0], sizeof(float), 1024, DataFile);
   }
   std::cout << std::endl;
@@ -106,14 +107,22 @@ void Decode::AccessEventHeader() {
   WAVEFORM tmpWaveform;
   ROOTFile = new TFile(ROOTFileName.c_str(), "RECREATE");
   TTree* DataTree = new TTree("DataTree", "DataTree");
-  DataTree->Branch("TimeChannel1", tmpWaveform.Time[0], "TimeChannel1[1024]/D");
-  DataTree->Branch("TimeChannel2", tmpWaveform.Time[1], "TimeChannel2[1024]/D");
-  DataTree->Branch("TimeChannel3", tmpWaveform.Time[2], "TimeChannel3[1024]/D");
-  DataTree->Branch("TimeChannel4", tmpWaveform.Time[3], "TimeChannel4[1024]/D");
-  DataTree->Branch("WaveformChannel1", tmpWaveform.Waveform[0], "WaveformChannel1[1024]/D");
-  DataTree->Branch("WaveformChannel2", tmpWaveform.Waveform[1], "WaveformChannel2[1024]/D");
-  DataTree->Branch("WaveformChannel3", tmpWaveform.Waveform[2], "WaveformChannel3[1024]/D");
-  DataTree->Branch("WaveformChannel4", tmpWaveform.Waveform[3], "WaveformChannel4[1024]/D");
+  if (DataFoundInChannel[0]) {
+    DataTree->Branch("TimeChannel1", tmpWaveform.Time[0], "TimeChannel1[1024]/D");
+    DataTree->Branch("WaveformChannel1", tmpWaveform.Waveform[0], "WaveformChannel1[1024]/D");
+  }
+  if (DataFoundInChannel[1]) {
+    DataTree->Branch("TimeChannel2", tmpWaveform.Time[1], "TimeChannel2[1024]/D");
+    DataTree->Branch("WaveformChannel2", tmpWaveform.Waveform[1], "WaveformChannel2[1024]/D");
+  }
+  if (DataFoundInChannel[2]) {
+    DataTree->Branch("TimeChannel3", tmpWaveform.Time[2], "TimeChannel3[1024]/D");
+    DataTree->Branch("WaveformChannel3", tmpWaveform.Waveform[2], "WaveformChannel3[1024]/D");
+  }
+  if (DataFoundInChannel[3]) {
+    DataTree->Branch("TimeChannel4", tmpWaveform.Time[3], "TimeChannel4[1024]/D");
+    DataTree->Branch("WaveformChannel4", tmpWaveform.Waveform[3], "WaveformChannel4[1024]/D");
+  }
 
   for (unsigned int EventID = 0; EventID < NumberOfEvents; EventID++) {
     #ifdef VerboseMode

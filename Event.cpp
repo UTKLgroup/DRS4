@@ -39,14 +39,23 @@ void Event::Init(TTree *tree) {
   fChain   = tree;
   fCurrent = -1;
   fChain->SetMakeClass(1);
-  fChain->SetBranchAddress("TimeChannel1", TimeChannel1, &b_TimeChannel1);
-  fChain->SetBranchAddress("TimeChannel2", TimeChannel2, &b_TimeChannel2);
-  fChain->SetBranchAddress("TimeChannel3", TimeChannel3, &b_TimeChannel3);
-  fChain->SetBranchAddress("TimeChannel4", TimeChannel4, &b_TimeChannel4);
-  fChain->SetBranchAddress("WaveformChannel1", WaveformChannel1, &b_WaveformChannel1);
-  fChain->SetBranchAddress("WaveformChannel2", WaveformChannel2, &b_WaveformChannel2);
-  fChain->SetBranchAddress("WaveformChannel3", WaveformChannel3, &b_WaveformChannel3);
-  fChain->SetBranchAddress("WaveformChannel4", WaveformChannel4, &b_WaveformChannel4);
+  if (fChain->FindBranch("TimeChannel1")) {
+    fChain->SetBranchAddress("TimeChannel1", TimeChannel1, &b_TimeChannel1);
+    fChain->SetBranchAddress("WaveformChannel1", WaveformChannel1, &b_WaveformChannel1);
+  }
+  if (fChain->FindBranch("TimeChannel2")) {
+    fChain->SetBranchAddress("TimeChannel2", TimeChannel2, &b_TimeChannel2);
+    fChain->SetBranchAddress("WaveformChannel2", WaveformChannel2, &b_WaveformChannel2);
+  }
+  if (fChain->FindBranch("TimeChannel3")) {
+    fChain->SetBranchAddress("TimeChannel3", TimeChannel3, &b_TimeChannel3);
+    fChain->SetBranchAddress("WaveformChannel3", WaveformChannel3, &b_WaveformChannel3);
+  }
+  if (fChain->FindBranch("TimeChannel4")) {
+    fChain->SetBranchAddress("TimeChannel4", TimeChannel4, &b_TimeChannel4);
+    fChain->SetBranchAddress("WaveformChannel4", WaveformChannel4, &b_WaveformChannel4);
+  }
+  return;
 }
 
 bool Event::Cut(Long64_t entry) {
@@ -64,6 +73,6 @@ void Event::Loop() {
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
 
-    if (Cut(ientry)) continue;
+    if (!Cut(ientry)) continue;
   }
 }

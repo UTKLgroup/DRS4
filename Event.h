@@ -1,6 +1,8 @@
 #ifndef Event_h
 #define Event_h
 
+#include <iostream>
+
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -10,6 +12,7 @@
 
 class Event {
 public:
+
   TTree *fChain;  // !pointer to the analyzed TTree or TChain
   Int_t fCurrent; // !current Tree number in a TChain
 
@@ -40,6 +43,9 @@ public:
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree);
   virtual void     Loop();
+
+private:
+
 };
 
 #endif // ifndef Event_h
