@@ -42,10 +42,19 @@ public:
   virtual Int_t    GetEntry(Long64_t entry);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree);
-  virtual void     Loop();
+  virtual void     Run();
+
+  // Data quality control
+  // These functions will be used in Cut()
+  //virtual bool     RogueWaveformCheck();
+  //virtual bool     CutoffWaveformCheck();
+
+  // Validation/Visualization
+  // For quick validation of the analysis
+
 
 private:
-
+  bool            DataFoundInChannel[4] = {false, false, false, false};
 };
 
 #endif // ifndef Event_h

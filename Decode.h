@@ -52,6 +52,7 @@ public:
   std::string GetROOTFileName();
   void        SaveROOTFile();
   void        SetFilter(unsigned int userNumberOfFilteringPoints, unsigned int userFilteringDegree);
+  void        SetSaveRawWaveform();
 
 private:
   void AccessTimeHeader();
@@ -63,6 +64,7 @@ private:
 
   GSFilter*       WaveformFilter;
   bool            FilterFlag = false;
+  bool            SaveRawWaveform = false;
   unsigned int    NumberOfFilteringPoints;
   unsigned int    FilteringDegree;
 

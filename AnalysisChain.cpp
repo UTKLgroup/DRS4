@@ -19,9 +19,10 @@ int main(int argc, char *argv[]) {
     ss >> NumberOfEvents;
     Decode* DataSet1 = new Decode(argv[1], NumberOfEvents);
     DataSet1->SetFilter(7, 3);
+    DataSet1->SetSaveRawWaveform();
     DataSet1->Run();
     Event* EventDataSet1 = new Event(DataSet1->GetROOTFileName());
-    EventDataSet1->Loop();
+    EventDataSet1->Run();
   }
 
   return 0;
