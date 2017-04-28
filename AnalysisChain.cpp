@@ -8,11 +8,16 @@ int main(int argc, char *argv[]) {
 
   if (argc < 2) {
     std::cout << std::endl;
-    std::cout << "Please provide a data file as an argument, e.g.: " << std::endl << std::endl;
-    std::cout << "./AnalysisChain neutron.dat" << std::endl << std::endl;
+    std::cout << "Please provide arguments as: " << std::endl << std::endl;
+    std::cout << "\t./AnalysisChain <Raw data file> <Number of events>" << std::endl << std::endl;
+    std::cout << "Example: " << std::endl << std::endl;
+    std::cout << "\t./AnalysisChain neutron.dat 100" << std::endl << std::endl;
     return 0;
   } else {
-    Decode* DataSet1 = new Decode(argv[1], 100);
+    std::stringstream ss(argv[2]);
+    int NumberOfEvents;
+    ss >> NumberOfEvents;
+    Decode* DataSet1 = new Decode(argv[1], NumberOfEvents);
     DataSet1->SetFilter(7, 3);
     DataSet1->Run();
     Event* EventDataSet1 = new Event(DataSet1->GetROOTFileName());
