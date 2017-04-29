@@ -24,18 +24,29 @@ public:
 
 private:
   virtual void CalculateJMatrix();
+  virtual void CalculateAEvenMatrix();
+  virtual void CalculateAOddMatrix();
   virtual void CalculateCMatrix();
   virtual void CalculateFuncSmoothingCoeffs();
+  virtual void CalculateFirstDerivativeSmoothingCoeffs();
   virtual void SetNumberOfPoints(unsigned int);
   virtual void SetExtrapolationDegree(unsigned int);
 
   unsigned int NumberOfPoints;
   unsigned int ExtrapolationDegree;
+
+  double*   JArray;
+  double*   JJTransposeArray;
   TMatrixD* JMatrix;
+  TMatrixD* JEvenMatrix;
+  TMatrixD* JOddMatrix;
   TMatrixD* JTransposeMatrix;
   TMatrixD* JJTransposeMatrix;
+  TMatrixD* AEvenMatrix;
+  TMatrixD* AOddMatrix;
   TMatrixD* CMatrix;
   double*   FuncSmoothingCoeffs;
+  double*   FirstDerivativeSmoothingCoeffs;
 };
 
 #endif

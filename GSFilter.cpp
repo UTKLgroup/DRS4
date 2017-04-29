@@ -5,8 +5,11 @@ GSFilter::GSFilter(unsigned int userNumberOfPoints, unsigned int userExtrapolati
   SetExtrapolationDegree(userExtrapolationDegree);
   SetNumberOfPoints(userNumberOfPoints);
   CalculateJMatrix();
+  CalculateAEvenMatrix();
+  CalculateAOddMatrix();
   CalculateCMatrix();
   CalculateFuncSmoothingCoeffs();
+  CalculateFirstDerivativeSmoothingCoeffs();
 }
 
 GSFilter::~GSFilter() {
@@ -32,7 +35,13 @@ void GSFilter::PrintMatrices() {
 
   std::cout << "The function smoothing coefficents using Golay-Savitzky filter are: " << std::endl;
   for (unsigned int i = 0; i < NumberOfPoints; i++) {
-    std::cout << "a[" << i << "] = " << std::setw(12) << *(FuncSmoothingCoeffs + i) << "." << std::endl;
+    std::cout << "A[" << i << "] = " << std::setw(12) << *(FuncSmoothingCoeffs + i) << "." << std::endl;
+  }
+  std::cout << std::endl;
+
+  std::cout << "The first derivative smoothing coefficents using Golay-Savitzky filter are: " << std::endl;
+  for (unsigned int i = 0; i < NumberOfPoints; i++) {
+    std::cout << "B[" << i << "] = " << std::setw(12) << *(FirstDerivativeSmoothingCoeffs + i) << "." << std::endl;
   }
   std::cout << std::endl;
 
@@ -57,7 +66,7 @@ void GSFilter::SetExtrapolationDegree(unsigned int userExtrapolationDegree) {
 }
 
 void GSFilter::CalculateJMatrix() {
-  double* JArray = (double*) malloc(NumberOfPoints * ExtrapolationDegree * sizeof(double));
+  JArray = (double*) malloc(NumberOfPoints * ExtrapolationDegree * sizeof(double));
   for (int i = 0; i < NumberOfPoints; i++) {
     for (int j = 0; j < ExtrapolationDegree; j++) {
       if ((- ((NumberOfPoints - 1) / 2) + i == 0) && (j == 0)) {
@@ -75,6 +84,84 @@ void GSFilter::CalculateJMatrix() {
 
   JJTransposeMatrix = new TMatrixD(ExtrapolationDegree, ExtrapolationDegree);
   JJTransposeMatrix->Mult(*JTransposeMatrix, *JMatrix);
+  JJTransposeArray = JJTransposeMatrix->GetMatrixArray();
+
+  return;
+}
+
+void GSFilter::CalculateAEvenMatrix() {
+  unsigned int NumberOfColumns = (int)(ExtrapolationDegree / 2);
+  unsigned int NumberOfRows    = NumberOfPoints;
+
+  double* JEvenArray = (double*) malloc(NumberOfRows * NumberOfColumns * sizeof(double));
+  for (unsigned int i = 0; i < NumberOfRows; i++) {
+    for (unsigned int j = 0; j < ExtrapolationDegree; j++) {
+      if (j % 2 == 0) {
+        *(JEvenArray + i*NumberOfColumns + (int)(j/2)) = *(JArray + i*ExtrapolationDegree + j);
+      }
+    }
+  }
+  TMatrixD* JEvenMatrix = new TMatrixD(NumberOfRows, NumberOfColumns, JEvenArray);
+
+  double* JJTransposeEvenArray = (double*) malloc(NumberOfColumns * NumberOfColumns * sizeof(double));
+  for (unsigned int i = 0; i < ExtrapolationDegree; i++) {
+    for (unsigned int j = 0; j < ExtrapolationDegree; j++) {
+      if (j % 2 == 0 && i % 2 == 0) {
+        *(JJTransposeEvenArray + (int)(i/2)*NumberOfColumns + (int)(j/2)) = *(JJTransposeArray + i*ExtrapolationDegree + j);
+      }
+    }
+  }
+  TMatrixD* JJTransposeEvenMatrix = new TMatrixD(NumberOfColumns, NumberOfColumns, JJTransposeEvenArray);
+
+  // Calculate AEven
+  double Determinant;
+  JJTransposeEvenMatrix->InvertFast(&Determinant);
+  // Important notice
+  // - NumberOfRows happens to be the number of columns of the AEven matrix;
+  // - NumberOfColumns happens to be the number of rows of the AEven matrix;
+  AEvenMatrix = new TMatrixD(NumberOfColumns, NumberOfRows);
+  AEvenMatrix->Mult(*JJTransposeEvenMatrix, *JEvenMatrix);
+
+  return;
+}
+
+void GSFilter::CalculateAOddMatrix() {
+  unsigned int NumberOfColumns;
+  if (ExtrapolationDegree % 2 == 0) {
+    NumberOfColumns = (int)(ExtrapolationDegree / 2);
+  } else {
+    NumberOfColumns = (int)(ExtrapolationDegree / 2) - 1;
+  }
+  unsigned int NumberOfRows    = NumberOfPoints;
+
+  double* JOddArray = (double*) malloc(NumberOfRows * NumberOfColumns * sizeof(double));
+  for (unsigned int i = 0; i < NumberOfRows; i++) {
+    for (unsigned int j = 0; j < ExtrapolationDegree; j++) {
+      if (j % 2 == 1) {
+        *(JOddArray + i*NumberOfColumns + (int)(j/2)) = *(JArray + i*ExtrapolationDegree + j);
+      }
+    }
+  }
+  TMatrixD* JOddMatrix = new TMatrixD(NumberOfRows, NumberOfColumns, JOddArray);
+
+  double* JJTransposeOddArray = (double*) malloc(NumberOfColumns * NumberOfColumns * sizeof(double));
+  for (unsigned int i = 0; i < ExtrapolationDegree; i++) {
+    for (unsigned int j = 0; j < ExtrapolationDegree; j++) {
+      if (j % 2 == 1 && i % 2 == 1) {
+        *(JJTransposeOddArray + (int)(i/2)*NumberOfColumns + (int)(j/2)) = *(JJTransposeArray + i*ExtrapolationDegree + j);
+      }
+    }
+  }
+  TMatrixD* JJTransposeOddMatrix = new TMatrixD(NumberOfColumns, NumberOfColumns, JJTransposeOddArray);
+
+  // Calculate AOdd
+  double Determinant;
+  JJTransposeOddMatrix->InvertFast(&Determinant);
+  // Important notice
+  // - NumberOfRows happens to be the number of columns of the AOdd matrix;
+  // - NumberOfColumns happens to be the number of rows of the AOdd matrix;
+  AOddMatrix = new TMatrixD(NumberOfColumns, NumberOfRows);
+  AOddMatrix->Mult(*JJTransposeOddMatrix, *JOddMatrix);
 
   return;
 }
@@ -91,7 +178,14 @@ void GSFilter::CalculateCMatrix() {
 
 void GSFilter::CalculateFuncSmoothingCoeffs() {
   FuncSmoothingCoeffs = (double*) malloc(NumberOfPoints * sizeof(double));
-  CMatrix->ExtractRow(0, 0, FuncSmoothingCoeffs);
+  AEvenMatrix->ExtractRow(0, 0, FuncSmoothingCoeffs);
+
+  return;
+}
+
+void GSFilter::CalculateFirstDerivativeSmoothingCoeffs() {
+  FirstDerivativeSmoothingCoeffs = (double*) malloc(NumberOfPoints * sizeof(double));
+  AOddMatrix->ExtractRow(0, 0, FirstDerivativeSmoothingCoeffs);
 
   return;
 }
@@ -103,7 +197,7 @@ void GSFilter::Filter(double* Waveform, double* FilteredWaveform) {
   *(FilteredWaveform + 1021) = *(Waveform + 1021);
   *(FilteredWaveform + 1022) = *(Waveform + 1022);
   *(FilteredWaveform + 1023) = *(Waveform + 1023);
-  
+
   for (unsigned int i = 3; i < 1021; i++) {
     *(FilteredWaveform + i) = 0;
     for (int j = -3; j < 4; j++) {

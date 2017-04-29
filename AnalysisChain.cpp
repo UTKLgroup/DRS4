@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
     DataSet1->SetSaveRawWaveform();
     DataSet1->Run();
     Event* EventDataSet1 = new Event(DataSet1->GetROOTFileName());
+    EventDataSet1->SetFilterValidation(100);
     EventDataSet1->Run();
   }
 
