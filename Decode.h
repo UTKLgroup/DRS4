@@ -77,6 +77,7 @@ private:
   unsigned short  Voltage[1024];
   double          Waveform[4][1024];
   double          FilteredWaveform[4][1024];
+  double          FirstDerivativeOfWaveform[4][1024];
   double          Time[4][1024];
   float           TimeBinWidth[4][1024];
 

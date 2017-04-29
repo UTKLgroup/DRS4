@@ -51,6 +51,10 @@ private:
   Double_t RawWaveformChannel2[1024];
   Double_t RawWaveformChannel3[1024];
   Double_t RawWaveformChannel4[1024];
+  Double_t DerivativeWaveformChannel1[1024];
+  Double_t DerivativeWaveformChannel2[1024];
+  Double_t DerivativeWaveformChannel3[1024];
+  Double_t DerivativeWaveformChannel4[1024];
 
   // List of branches
   TBranch *b_TimeChannel1;     // !
@@ -65,11 +69,16 @@ private:
   TBranch *b_RawWaveformChannel2; // !
   TBranch *b_RawWaveformChannel3; // !
   TBranch *b_RawWaveformChannel4; // !
+  TBranch *b_DerivativeWaveformChannel1; // !
+  TBranch *b_DerivativeWaveformChannel2; // !
+  TBranch *b_DerivativeWaveformChannel3; // !
+  TBranch *b_DerivativeWaveformChannel4; // !
 
   Long64_t         CurrentEventIndex;
   Double_t*        GetTimeChannel(unsigned int ChannelID);
   Double_t*        GetWaveformChannel(unsigned int ChannelID);
   Double_t*        GetRawWaveformChannel(unsigned int ChannelID);
+  Double_t*        GetDerivativeWaveformChannel(unsigned int ChannelID);
 
   // Data quality control
   // These functions will be used in Cut()

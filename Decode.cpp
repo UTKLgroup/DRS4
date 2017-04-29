@@ -111,27 +111,32 @@ void Decode::AccessTimeHeader() {
 void Decode::AccessEventHeader() {
   WAVEFORM tmpWaveform;
   WAVEFORM tmpRawWaveform;
+  WAVEFORM tmpFirstDerivativeOfWaveform;
   ROOTFile = new TFile(ROOTFileName.c_str(), "RECREATE");
   TTree* DataTree = new TTree("DataTree", "DataTree");
   if (DataFoundInChannel[0]) {
     DataTree->Branch("TimeChannel1", tmpWaveform.Time[0], "TimeChannel1[1024]/D");
     DataTree->Branch("WaveformChannel1", tmpWaveform.Waveform[0], "WaveformChannel1[1024]/D");
     DataTree->Branch("RawWaveformChannel1", tmpRawWaveform.Waveform[0], "RawWaveformChannel1[1024]/D");
+    DataTree->Branch("DerivativeWaveformChannel1", tmpFirstDerivativeOfWaveform.Waveform[0], "DerivativeWaveformChannel1[1024]/D");
   }
   if (DataFoundInChannel[1]) {
     DataTree->Branch("TimeChannel2", tmpWaveform.Time[1], "TimeChannel2[1024]/D");
     DataTree->Branch("WaveformChannel2", tmpWaveform.Waveform[1], "WaveformChannel2[1024]/D");
     DataTree->Branch("RawWaveformChannel2", tmpRawWaveform.Waveform[1], "RawWaveformChannel2[1024]/D");
+    DataTree->Branch("DerivativeWaveformChannel2", tmpFirstDerivativeOfWaveform.Waveform[1], "DerivativeWaveformChannel2[1024]/D");
   }
   if (DataFoundInChannel[2]) {
     DataTree->Branch("TimeChannel3", tmpWaveform.Time[2], "TimeChannel3[1024]/D");
     DataTree->Branch("WaveformChannel3", tmpWaveform.Waveform[2], "WaveformChannel3[1024]/D");
     DataTree->Branch("RawWaveformChannel3", tmpRawWaveform.Waveform[2], "RawWaveformChannel3[1024]/D");
+    DataTree->Branch("DerivativeWaveformChannel3", tmpFirstDerivativeOfWaveform.Waveform[2], "DerivativeWaveformChannel3[1024]/D");
   }
   if (DataFoundInChannel[3]) {
     DataTree->Branch("TimeChannel4", tmpWaveform.Time[3], "TimeChannel4[1024]/D");
     DataTree->Branch("WaveformChannel4", tmpWaveform.Waveform[3], "WaveformChannel4[1024]/D");
     DataTree->Branch("RawWaveformChannel4", tmpRawWaveform.Waveform[3], "RawWaveformChannel4[1024]/D");
+    DataTree->Branch("DerivativeWaveformChannel4", tmpFirstDerivativeOfWaveform.Waveform[3], "DerivativeWaveformChannel4[1024]/D");
   }
 
   for (unsigned int EventID = 0; EventID < NumberOfEvents; EventID++) {
@@ -174,6 +179,7 @@ void Decode::AccessEventHeader() {
 
       if (FilterFlag) {
         WaveformFilter->Filter(&Waveform[ChannelID][0], &FilteredWaveform[ChannelID][0]);
+        WaveformFilter->FirstDerivative(&Waveform[ChannelID][0], &FirstDerivativeOfWaveform[ChannelID][0]);
       }
     }
 
@@ -193,6 +199,7 @@ void Decode::AccessEventHeader() {
     if (FilterFlag) {
       for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
         std::copy(std::begin(FilteredWaveform[ChannelID]), std::end(FilteredWaveform[ChannelID]), std::begin(tmpWaveform.Waveform[ChannelID]));
+        std::copy(std::begin(FirstDerivativeOfWaveform[ChannelID]), std::end(FirstDerivativeOfWaveform[ChannelID]), std::begin(tmpFirstDerivativeOfWaveform.Waveform[ChannelID]));
       }
     }
     if (SaveRawWaveform) {

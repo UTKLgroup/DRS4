@@ -43,6 +43,7 @@ void Event::Init(TTree *tree) {
     DataFoundInChannel[0] = true;
     fChain->SetBranchAddress("TimeChannel1", TimeChannel1, &b_TimeChannel1);
     fChain->SetBranchAddress("WaveformChannel1", WaveformChannel1, &b_WaveformChannel1);
+    fChain->SetBranchAddress("DerivativeWaveformChannel1", DerivativeWaveformChannel1, &b_DerivativeWaveformChannel1);
     if (fChain->FindBranch("RawWaveformChannel1")) {
       RawWaveformExistFlag = true;
       fChain->SetBranchAddress("RawWaveformChannel1", RawWaveformChannel1, &b_RawWaveformChannel1);
@@ -52,6 +53,7 @@ void Event::Init(TTree *tree) {
     DataFoundInChannel[1] = true;
     fChain->SetBranchAddress("TimeChannel2", TimeChannel2, &b_TimeChannel2);
     fChain->SetBranchAddress("WaveformChannel2", WaveformChannel2, &b_WaveformChannel2);
+    fChain->SetBranchAddress("DerivativeWaveformChannel2", DerivativeWaveformChannel2, &b_DerivativeWaveformChannel2);
     if (fChain->FindBranch("RawWaveformChannel2")) {
       RawWaveformExistFlag = true;
       fChain->SetBranchAddress("RawWaveformChannel2", RawWaveformChannel2, &b_RawWaveformChannel2);
@@ -61,6 +63,7 @@ void Event::Init(TTree *tree) {
     DataFoundInChannel[2] = true;
     fChain->SetBranchAddress("TimeChannel3", TimeChannel3, &b_TimeChannel3);
     fChain->SetBranchAddress("WaveformChannel3", WaveformChannel3, &b_WaveformChannel3);
+    fChain->SetBranchAddress("DerivativeWaveformChannel3", DerivativeWaveformChannel3, &b_DerivativeWaveformChannel3);
     if (fChain->FindBranch("RawWaveformChannel3")) {
       RawWaveformExistFlag = true;
       fChain->SetBranchAddress("RawWaveformChannel3", RawWaveformChannel3, &b_RawWaveformChannel3);
@@ -70,6 +73,7 @@ void Event::Init(TTree *tree) {
     DataFoundInChannel[3] = true;
     fChain->SetBranchAddress("TimeChannel4", TimeChannel4, &b_TimeChannel4);
     fChain->SetBranchAddress("WaveformChannel4", WaveformChannel4, &b_WaveformChannel4);
+    fChain->SetBranchAddress("DerivativeWaveformChannel4", DerivativeWaveformChannel4, &b_DerivativeWaveformChannel4);
     if (fChain->FindBranch("RawWaveformChannel4")) {
       RawWaveformExistFlag = true;
       fChain->SetBranchAddress("RawWaveformChannel4", RawWaveformChannel4, &b_RawWaveformChannel4);
@@ -132,9 +136,12 @@ void Event::MakeFilterValidationPlots() {
 void Event::DrawFilterValidationPlotsForChannel(unsigned int ChannelID) {
   TGraph* grWaveform     = new TGraph(1024, GetTimeChannel(ChannelID), GetWaveformChannel(ChannelID));
   TGraph* grRawWaveform  = new TGraph(1024, GetTimeChannel(ChannelID), GetRawWaveformChannel(ChannelID));
+  TGraph* grDerivative   = new TGraph(1024, GetTimeChannel(ChannelID), GetDerivativeWaveformChannel(ChannelID));
 
   grWaveform->SetLineColor(kRed);
+  grDerivative->SetLineColor(kBlue);
   TMultiGraph *mgrMultiWaveform = new TMultiGraph();
+  mgrMultiWaveform->Add(grDerivative,  "l");
   mgrMultiWaveform->Add(grRawWaveform, "l");
   mgrMultiWaveform->Add(grWaveform,    "l");
   TCanvas* cMultiWaveform = new TCanvas();
@@ -197,6 +204,23 @@ Double_t* Event::GetRawWaveformChannel(unsigned int ChannelID) {
     }
     case 3: {
       return &RawWaveformChannel4[0];
+    }
+  }
+}
+
+Double_t* Event::GetDerivativeWaveformChannel(unsigned int ChannelID) {
+  switch (ChannelID) {
+    case 0: {
+      return &DerivativeWaveformChannel1[0];
+    }
+    case 1: {
+      return &DerivativeWaveformChannel2[0];
+    }
+    case 2: {
+      return &DerivativeWaveformChannel3[0];
+    }
+    case 3: {
+      return &DerivativeWaveformChannel4[0];
     }
   }
 }
