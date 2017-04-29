@@ -230,7 +230,7 @@ void GSFilter::CalculateFirstDerivativeSmoothingCoeffs() {
 }
 
 void GSFilter::Filter(double* Waveform, double* FilteredWaveform) {
-  unsigned int HalfNumberOfPoints = (int)(NumberOfPoints / 2);
+  int HalfNumberOfPoints = (int)(NumberOfPoints / 2);
   for (unsigned int i = HalfNumberOfPoints; i < 1024 - HalfNumberOfPoints; i++) {
     *(FilteredWaveform + i) = 0;
     for (int j = -HalfNumberOfPoints; j < HalfNumberOfPoints + 1; j++) {
@@ -246,7 +246,7 @@ void GSFilter::Filter(double* Waveform, double* FilteredWaveform) {
 }
 
 void GSFilter::FirstDerivative(double* Waveform, double* FilteredFirstDerivative, double VariableStep) {
-  unsigned int HalfNumberOfPoints = (int)(NumberOfPoints / 2);
+  int HalfNumberOfPoints = (int)(NumberOfPoints / 2);
   for (unsigned int i = HalfNumberOfPoints; i < 1024 - HalfNumberOfPoints; i++) {
     *(FilteredFirstDerivative + i) = 0;
     for (int j = -HalfNumberOfPoints; j < HalfNumberOfPoints + 1; j++) {
