@@ -146,6 +146,8 @@ void Event::DrawFilterValidationPlotsForChannel(unsigned int ChannelID) {
   mgrMultiWaveform->Add(grWaveform,    "l");
   TCanvas* cMultiWaveform = new TCanvas();
   mgrMultiWaveform->Draw("APL");
+  mgrMultiWaveform->GetXaxis()->SetTitle("Time [ns]");
+  mgrMultiWaveform->GetYaxis()->SetTitle("Voltage [V]");
 
   const int CreateDirectoryError = mkdir("./ValidationPlots", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   cMultiWaveform->SaveAs(Form("./ValidationPlots/FilterValidation_evt%i_ch%i.eps", CurrentEventIndex, ChannelID + 1));

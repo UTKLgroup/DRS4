@@ -178,8 +178,9 @@ void Decode::AccessEventHeader() {
       }
 
       if (FilterFlag) {
+        double TimeBinWidthOfCurrentEvent = (Time[ChannelID][1023] - Time[ChannelID][0]) / 1023;
         WaveformFilter->Filter(&Waveform[ChannelID][0], &FilteredWaveform[ChannelID][0]);
-        WaveformFilter->FirstDerivative(&Waveform[ChannelID][0], &FirstDerivativeOfWaveform[ChannelID][0]);
+        WaveformFilter->FirstDerivative(&FilteredWaveform[ChannelID][0], &FirstDerivativeOfWaveform[ChannelID][0], TimeBinWidthOfCurrentEvent);
       }
     }
 
