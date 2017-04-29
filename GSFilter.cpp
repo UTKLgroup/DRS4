@@ -114,7 +114,12 @@ void GSFilter::CalculateJMatrix() {
 }
 
 void GSFilter::CalculateAEvenMatrix() {
-  unsigned int NumberOfColumns = (int)(ExtrapolationDegree / 2);
+  unsigned int NumberOfColumns;
+  if (ExtrapolationDegree % 2 == 0) {
+    NumberOfColumns = (int)(ExtrapolationDegree / 2);
+  } else {
+    NumberOfColumns = (int)(ExtrapolationDegree / 2) + 1;
+  }
   unsigned int NumberOfRows    = NumberOfPoints;
 
   double* JEvenArray = (double*) malloc(NumberOfRows * NumberOfColumns * sizeof(double));
@@ -159,7 +164,7 @@ void GSFilter::CalculateAOddMatrix() {
   if (ExtrapolationDegree % 2 == 0) {
     NumberOfColumns = (int)(ExtrapolationDegree / 2);
   } else {
-    NumberOfColumns = (int)(ExtrapolationDegree / 2) - 1;
+    NumberOfColumns = (int)(ExtrapolationDegree / 2);
   }
   unsigned int NumberOfRows    = NumberOfPoints;
 
@@ -227,25 +232,33 @@ void GSFilter::CalculateFirstDerivativeSmoothingCoeffs() {
 void GSFilter::Filter(double* Waveform, double* FilteredWaveform) {
   unsigned int HalfNumberOfPoints = (int)(NumberOfPoints / 2);
   for (unsigned int i = HalfNumberOfPoints; i < 1024 - HalfNumberOfPoints; i++) {
-    Hold();
     *(FilteredWaveform + i) = 0;
-    for (int j = -3; j < 4; j++) {
-      *(FilteredWaveform + i) += *(Waveform + i + j) * *(FuncSmoothingCoeffs + j + 3);
+    for (int j = -HalfNumberOfPoints; j < HalfNumberOfPoints + 1; j++) {
+      *(FilteredWaveform + i) += *(Waveform + i + j) * *(FuncSmoothingCoeffs + j + HalfNumberOfPoints);
     }
   }
-
-  *(FilteredWaveform + 0) = *(Waveform + 0);
-  *(FilteredWaveform + 1) = *(Waveform + 1);
-  *(FilteredWaveform + 2) = *(Waveform + 2);
-  *(FilteredWaveform + 1021) = *(Waveform + 1021);
-  *(FilteredWaveform + 1022) = *(Waveform + 1022);
-  *(FilteredWaveform + 1023) = *(Waveform + 1023);
-
-  for (unsigned int i = 3; i < 1021; i++) {
-    *(FilteredWaveform + i) = 0;
-    for (int j = -3; j < 4; j++) {
-      *(FilteredWaveform + i) += *(Waveform + i + j) * *(FuncSmoothingCoeffs + j + 3);
-    }
+  for (unsigned int i = 0; i < HalfNumberOfPoints; i++) {
+    *(FilteredWaveform + i) = *(FilteredWaveform + HalfNumberOfPoints);
+    *(FilteredWaveform + 1023 - i) = *(FilteredWaveform + 1023 - HalfNumberOfPoints);
   }
+
+  return;
+}
+
+void GSFilter::FirstDerivative(double* Waveform, double* FilteredFirstDerivative, double VariableStep) {
+  unsigned int HalfNumberOfPoints = (int)(NumberOfPoints / 2);
+  for (unsigned int i = HalfNumberOfPoints; i < 1024 - HalfNumberOfPoints; i++) {
+    *(FilteredFirstDerivative + i) = 0;
+    for (int j = -HalfNumberOfPoints; j < HalfNumberOfPoints + 1; j++) {
+      *(FilteredFirstDerivative + i) += *(Waveform + i + j) * *(FirstDerivativeSmoothingCoeffs + j + HalfNumberOfPoints);
+    }
+    *(FilteredFirstDerivative + i) = *(FilteredFirstDerivative + i) / VariableStep;
+  }
+
+  for (unsigned int i = 0; i < HalfNumberOfPoints; i++) {
+    *(FilteredFirstDerivative + i) = *(FilteredFirstDerivative + HalfNumberOfPoints);
+    *(FilteredFirstDerivative + 1023 - i) = *(FilteredFirstDerivative + 1023 - HalfNumberOfPoints);
+  }
+
   return;
 }

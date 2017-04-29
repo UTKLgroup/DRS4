@@ -21,6 +21,7 @@ public:
   virtual  ~GSFilter();
   virtual void PrintMatrices();
   virtual void Filter(double* Waveform, double* FilteredWaveform);
+  virtual void FirstDerivative(double* Waveform, double* FilteredWaveform, double VariableStep = 1.);
 
 private:
   virtual void CalculateJMatrix();
