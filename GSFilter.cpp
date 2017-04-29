@@ -33,6 +33,30 @@ void GSFilter::PrintMatrices() {
   CMatrix->Print();
   std::cout << std::endl;
 
+  std::cout << "\t The J-even matrices: " << std::endl;
+  JEvenMatrix->Print();
+  std::cout << std::endl;
+
+  std::cout << "\t The JJTranspose-even matrices: " << std::endl;
+  JJTransposeEvenMatrix->Print();
+  std::cout << std::endl;
+
+  std::cout << "\t The A-even matrices: " << std::endl;
+  AEvenMatrix->Print();
+  std::cout << std::endl;
+
+  std::cout << "\t The J-odd matrices: " << std::endl;
+  JOddMatrix->Print();
+  std::cout << std::endl;
+
+  std::cout << "\t The JJTranspose-odd matrices: " << std::endl;
+  JJTransposeOddMatrix->Print();
+  std::cout << std::endl;
+
+  std::cout << "\t The A-odd matrices: " << std::endl;
+  AOddMatrix->Print();
+  std::cout << std::endl;
+
   std::cout << "The function smoothing coefficents using Golay-Savitzky filter are: " << std::endl;
   for (unsigned int i = 0; i < NumberOfPoints; i++) {
     std::cout << "A[" << i << "] = " << std::setw(12) << *(FuncSmoothingCoeffs + i) << "." << std::endl;
@@ -101,7 +125,7 @@ void GSFilter::CalculateAEvenMatrix() {
       }
     }
   }
-  TMatrixD* JEvenMatrix = new TMatrixD(NumberOfRows, NumberOfColumns, JEvenArray);
+  JEvenMatrix = new TMatrixD(NumberOfRows, NumberOfColumns, JEvenArray);
 
   double* JJTransposeEvenArray = (double*) malloc(NumberOfColumns * NumberOfColumns * sizeof(double));
   for (unsigned int i = 0; i < ExtrapolationDegree; i++) {
@@ -111,16 +135,21 @@ void GSFilter::CalculateAEvenMatrix() {
       }
     }
   }
-  TMatrixD* JJTransposeEvenMatrix = new TMatrixD(NumberOfColumns, NumberOfColumns, JJTransposeEvenArray);
+  JJTransposeEvenMatrix = new TMatrixD(NumberOfColumns, NumberOfColumns, JJTransposeEvenArray);
 
-  // Calculate AEven
+  /* Calculate AEven */
+  // Inverse JJTransposeEven matrix
   double Determinant;
   JJTransposeEvenMatrix->InvertFast(&Determinant);
+  // Transposer JEven matrix
+  TMatrixD* JTransposeEvenMatrix = new TMatrixD(NumberOfColumns, NumberOfRows);
+  JTransposeEvenMatrix->Transpose(*JEvenMatrix);
   // Important notice
   // - NumberOfRows happens to be the number of columns of the AEven matrix;
   // - NumberOfColumns happens to be the number of rows of the AEven matrix;
+  // - AEven matrix is the product of Inversed-JJTransposeEven and JTransposeEven
   AEvenMatrix = new TMatrixD(NumberOfColumns, NumberOfRows);
-  AEvenMatrix->Mult(*JJTransposeEvenMatrix, *JEvenMatrix);
+  AEvenMatrix->Mult(*JJTransposeEvenMatrix, *JTransposeEvenMatrix);
 
   return;
 }
@@ -142,7 +171,7 @@ void GSFilter::CalculateAOddMatrix() {
       }
     }
   }
-  TMatrixD* JOddMatrix = new TMatrixD(NumberOfRows, NumberOfColumns, JOddArray);
+  JOddMatrix = new TMatrixD(NumberOfRows, NumberOfColumns, JOddArray);
 
   double* JJTransposeOddArray = (double*) malloc(NumberOfColumns * NumberOfColumns * sizeof(double));
   for (unsigned int i = 0; i < ExtrapolationDegree; i++) {
@@ -152,16 +181,21 @@ void GSFilter::CalculateAOddMatrix() {
       }
     }
   }
-  TMatrixD* JJTransposeOddMatrix = new TMatrixD(NumberOfColumns, NumberOfColumns, JJTransposeOddArray);
+  JJTransposeOddMatrix = new TMatrixD(NumberOfColumns, NumberOfColumns, JJTransposeOddArray);
 
-  // Calculate AOdd
+  /* Calculate AOdd */
+  // Inverse JJTransposeOdd matrix
   double Determinant;
   JJTransposeOddMatrix->InvertFast(&Determinant);
+  // Transposer JOdd matrix
+  TMatrixD* JTransposeOddMatrix = new TMatrixD(NumberOfColumns, NumberOfRows);
+  JTransposeOddMatrix->Transpose(*JOddMatrix);
   // Important notice
   // - NumberOfRows happens to be the number of columns of the AOdd matrix;
   // - NumberOfColumns happens to be the number of rows of the AOdd matrix;
+  // - AOdd matrix is the product of Inversed-JJTransposeOdd and JTransposeOdd
   AOddMatrix = new TMatrixD(NumberOfColumns, NumberOfRows);
-  AOddMatrix->Mult(*JJTransposeOddMatrix, *JOddMatrix);
+  AOddMatrix->Mult(*JJTransposeOddMatrix, *JTransposeOddMatrix);
 
   return;
 }
@@ -191,6 +225,15 @@ void GSFilter::CalculateFirstDerivativeSmoothingCoeffs() {
 }
 
 void GSFilter::Filter(double* Waveform, double* FilteredWaveform) {
+  unsigned int HalfNumberOfPoints = (int)(NumberOfPoints / 2);
+  for (unsigned int i = HalfNumberOfPoints; i < 1024 - HalfNumberOfPoints; i++) {
+    Hold();
+    *(FilteredWaveform + i) = 0;
+    for (int j = -3; j < 4; j++) {
+      *(FilteredWaveform + i) += *(Waveform + i + j) * *(FuncSmoothingCoeffs + j + 3);
+    }
+  }
+
   *(FilteredWaveform + 0) = *(Waveform + 0);
   *(FilteredWaveform + 1) = *(Waveform + 1);
   *(FilteredWaveform + 2) = *(Waveform + 2);

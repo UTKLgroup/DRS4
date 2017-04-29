@@ -2,8 +2,7 @@
 #include <sstream>
 #include <fstream>
 
-#include "../GSFilter.h"
-
+#include "./GSFilter.h"
 
 int main(int argc, char* argv[]) {
 

@@ -38,15 +38,18 @@ private:
   double*   JArray;
   double*   JJTransposeArray;
   TMatrixD* JMatrix;
-  TMatrixD* JEvenMatrix;
-  TMatrixD* JOddMatrix;
   TMatrixD* JTransposeMatrix;
   TMatrixD* JJTransposeMatrix;
-  TMatrixD* AEvenMatrix;
-  TMatrixD* AOddMatrix;
   TMatrixD* CMatrix;
   double*   FuncSmoothingCoeffs;
   double*   FirstDerivativeSmoothingCoeffs;
+
+  TMatrixD* AEvenMatrix;
+  TMatrixD* AOddMatrix;
+  TMatrixD* JEvenMatrix;
+  TMatrixD* JJTransposeEvenMatrix;
+  TMatrixD* JOddMatrix;
+  TMatrixD* JJTransposeOddMatrix;
 };
 
 #endif
