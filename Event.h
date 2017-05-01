@@ -10,11 +10,11 @@
 #include <TFile.h>
 #include <TH2.h>
 #include <TStyle.h>
-
 #include <TGraph.h>
 #include <TMultiGraph.h>
 #include <TCanvas.h>
 #include <TString.h>
+#include <TLine.h>
 
 struct CHANNEL {
   std::string TimeBranchName;
@@ -31,6 +31,7 @@ struct CHANNEL {
   Double_t    DerivativeWaveform[1024];
   TH1D*       hVoltageSampleHistogram;
   double      Baseline;
+  double      BaselineRMS;
 };
 
 class Event {
@@ -64,7 +65,7 @@ private:
 
   // Calculate high-level variables
   virtual void     FillVoltageSampleHistogram();
-  virtual void     FindBaseline();
+  virtual void     FindBaselineInfo();
 
   virtual void          MakeValidationPlots();
   virtual TMultiGraph*  DrawFilterValidationPlots(unsigned int ChannelID);

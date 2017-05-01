@@ -144,6 +144,13 @@ void Event::MakeValidationPlots() {
       cValidation->Divide(1, 2);
       cValidation->cd(1);
       DrawFilterValidationPlots(ChannelID)->Draw("APL");
+      // Draw a line to indicate the baseline of the waveform
+      double yBaseline = GetChannel(ChannelID)->Baseline;
+      double xMin      = GetChannel(ChannelID)->Time[0];
+      double xMax      = GetChannel(ChannelID)->Time[1023];
+      TLine *theBaseline = new TLine(xMin, yBaseline, xMax, yBaseline);
+      theBaseline->SetLineColor(kGreen);
+      theBaseline->Draw();
       cValidation->cd(2);
       DrawVoltageSampleHistogram(ChannelID)->Draw();
       cValidation->SaveAs(Form("./ValidationPlots/Evt%i_Ch%i.eps", CurrentEventIndex, ChannelID + 1));
@@ -164,6 +171,7 @@ TMultiGraph* Event::DrawFilterValidationPlots(unsigned int ChannelID) {
   mgrMultiWaveform->Add(grDerivative,  "l");
   mgrMultiWaveform->Add(grRawWaveform, "l");
   mgrMultiWaveform->Add(grWaveform,    "l");
+
   mgrMultiWaveform->Draw("APL");
   mgrMultiWaveform->SetTitle("Waveform display");
   mgrMultiWaveform->GetXaxis()->SetTitle("Time [ns]");
@@ -185,8 +193,25 @@ CHANNEL* Event::GetChannel(unsigned int ChannelID) {
   return &ChannelContainer.at(ChannelID);
 }
 
-void Event::FindBaseline() {
+void Event::FindBaselineInfo() {
   FillVoltageSampleHistogram();
+
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    TH1D* h = GetChannel(ChannelID)->hVoltageSampleHistogram;
+    if (DataFoundInChannel[ChannelID]) {
+      unsigned int iBin = h->FindBin(0.002);
+      unsigned int maxBinContent = 0;
+      unsigned int maxBinCenter;
+      while (h->GetBinCenter(iBin) > -0.006) {
+        if (maxBinContent < h->GetBinContent(iBin)) {
+          maxBinContent = h->GetBinContent(iBin);
+          maxBinCenter  = iBin;
+        }
+        iBin--;
+      }
+      GetChannel(ChannelID)->Baseline = h->GetBinCenter(maxBinCenter);
+    }
+  }
 
   for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
     TH1D* h = GetChannel(ChannelID)->hVoltageSampleHistogram;
