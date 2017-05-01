@@ -8,6 +8,7 @@ Event::Event(std::string ROOTFile) : fChain(0) {
   }
   f->GetObject("DataTree", tree);
 
+  InitiateChannelContainer();
   Init(tree);
 }
 
@@ -16,11 +17,6 @@ Event::~Event() {
   delete fChain->GetCurrentFile();
 }
 
-Int_t Event::GetEntry(Long64_t entry) {
-  // Read contents of entry.
-  if (!fChain) return 0;
-  return fChain->GetEntry(entry);
-}
 
 Long64_t Event::LoadTree(Long64_t entry) {
   // Set the environment to read one entry
@@ -33,57 +29,52 @@ Long64_t Event::LoadTree(Long64_t entry) {
   return centry;
 }
 
+void Event::InitiateChannelContainer() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    CHANNEL tmpChannel;
+    ChannelContainer.push_back(tmpChannel);
+  }
+
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    std::stringstream ChannelStringStream;
+    ChannelStringStream << (ChannelID + 1);
+
+    GetChannel(ChannelID)->TimeBranchName = "TimeChannel" + ChannelStringStream.str();
+    GetChannel(ChannelID)->WaveformBranchName = "WaveformChannel" + ChannelStringStream.str();
+    GetChannel(ChannelID)->RawWaveformBranchName = "RawWaveformChannel" + ChannelStringStream.str();
+    GetChannel(ChannelID)->DerivativeWaveformBranchName = "DerivativeWaveformChannel" + ChannelStringStream.str();
+
+    std::string hName = "hVoltageSampleHistogramChannel" + ChannelStringStream.str();
+    GetChannel(ChannelID)->hVoltageSampleHistogram = new TH1D(hName.c_str(), "Voltage samples histogram", 6000, -.52, .02);
+  }
+
+  return;
+}
+
+void Event::InitiateBranches(unsigned int ChannelID) {
+  DataFoundInChannel[ChannelID] = true;
+  fChain->SetBranchAddress(GetChannel(ChannelID)->TimeBranchName.c_str(), GetChannel(ChannelID)->Time, &(GetChannel(ChannelID)->b_TimeChannel));
+  fChain->SetBranchAddress(GetChannel(ChannelID)->WaveformBranchName.c_str(), GetChannel(ChannelID)->Waveform, &(GetChannel(ChannelID)->b_WaveformChannel));
+  fChain->SetBranchAddress(GetChannel(ChannelID)->DerivativeWaveformBranchName.c_str(), GetChannel(ChannelID)->DerivativeWaveform, &(GetChannel(ChannelID)->b_DerivativeWaveformChannel));
+  if (fChain->FindBranch(GetChannel(ChannelID)->RawWaveformBranchName.c_str())) {
+    RawWaveformExistFlag = true;
+    fChain->SetBranchAddress(GetChannel(ChannelID)->RawWaveformBranchName.c_str(), GetChannel(ChannelID)->RawWaveform, &(GetChannel(ChannelID)->b_RawWaveformChannel));
+  }
+
+  return;
+}
+
 void Event::Init(TTree *tree) {
-  // Set branch addresses and branch pointers
   if (!tree) return;
   fChain   = tree;
   fCurrent = -1;
   fChain->SetMakeClass(1);
-  if (fChain->FindBranch("TimeChannel1")) {
-    DataFoundInChannel[0] = true;
-    fChain->SetBranchAddress("TimeChannel1", TimeChannel1, &b_TimeChannel1);
-    fChain->SetBranchAddress("WaveformChannel1", WaveformChannel1, &b_WaveformChannel1);
-    fChain->SetBranchAddress("DerivativeWaveformChannel1", DerivativeWaveformChannel1, &b_DerivativeWaveformChannel1);
-    if (fChain->FindBranch("RawWaveformChannel1")) {
-      RawWaveformExistFlag = true;
-      fChain->SetBranchAddress("RawWaveformChannel1", RawWaveformChannel1, &b_RawWaveformChannel1);
-    }
-  }
-  if (fChain->FindBranch("TimeChannel2")) {
-    DataFoundInChannel[1] = true;
-    fChain->SetBranchAddress("TimeChannel2", TimeChannel2, &b_TimeChannel2);
-    fChain->SetBranchAddress("WaveformChannel2", WaveformChannel2, &b_WaveformChannel2);
-    fChain->SetBranchAddress("DerivativeWaveformChannel2", DerivativeWaveformChannel2, &b_DerivativeWaveformChannel2);
-    if (fChain->FindBranch("RawWaveformChannel2")) {
-      RawWaveformExistFlag = true;
-      fChain->SetBranchAddress("RawWaveformChannel2", RawWaveformChannel2, &b_RawWaveformChannel2);
-    }
-  }
-  if (fChain->FindBranch("TimeChannel3")) {
-    DataFoundInChannel[2] = true;
-    fChain->SetBranchAddress("TimeChannel3", TimeChannel3, &b_TimeChannel3);
-    fChain->SetBranchAddress("WaveformChannel3", WaveformChannel3, &b_WaveformChannel3);
-    fChain->SetBranchAddress("DerivativeWaveformChannel3", DerivativeWaveformChannel3, &b_DerivativeWaveformChannel3);
-    if (fChain->FindBranch("RawWaveformChannel3")) {
-      RawWaveformExistFlag = true;
-      fChain->SetBranchAddress("RawWaveformChannel3", RawWaveformChannel3, &b_RawWaveformChannel3);
-    }
-  }
-  if (fChain->FindBranch("TimeChannel4")) {
-    DataFoundInChannel[3] = true;
-    fChain->SetBranchAddress("TimeChannel4", TimeChannel4, &b_TimeChannel4);
-    fChain->SetBranchAddress("WaveformChannel4", WaveformChannel4, &b_WaveformChannel4);
-    fChain->SetBranchAddress("DerivativeWaveformChannel4", DerivativeWaveformChannel4, &b_DerivativeWaveformChannel4);
-    if (fChain->FindBranch("RawWaveformChannel4")) {
-      RawWaveformExistFlag = true;
-      fChain->SetBranchAddress("RawWaveformChannel4", RawWaveformChannel4, &b_RawWaveformChannel4);
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (fChain->FindBranch(ChannelContainer.at(ChannelID).TimeBranchName.c_str())) {
+      InitiateBranches(ChannelID);
     }
   }
   return;
-}
-
-bool Event::Cut(Long64_t entry) {
-  return true;
 }
 
 void Event::Run() {
@@ -96,133 +87,97 @@ void Event::Run() {
     if (ientry < 0) break;
     nb = fChain->GetEntry(CurrentEventIndex);   nbytes += nb;
 
-    if (!Cut(ientry)) continue;
-
     // Analysis steps start here
-    if (CurrentEventIndex < NumberOfEventForFilterValidation) {
-      if (FilterValidationFlag) {
-        MakeFilterValidationPlots();
+    FillVoltageSampleHistogram();
+    if (CurrentEventIndex < NumberOfEventForValidation) {
+      if (ValidationFlag) {
+        const int CreateDirectoryError = mkdir("./ValidationPlots", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        MakeValidationPlots();
       }
+    }
+  }
+
+  EndOfRun();
+  return;
+}
+
+void:: Event::EndOfRun() {
+  // delete to avoid memory leak
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    delete GetChannel(ChannelID)->hVoltageSampleHistogram;
+  }
+
+  return;
+}
+
+void Event::FillVoltageSampleHistogram() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    GetChannel(ChannelID)->hVoltageSampleHistogram->Reset();
+    for (unsigned int i = 0; i < 1024; i++) {
+      GetChannel(ChannelID)->hVoltageSampleHistogram->Fill(*(ChannelContainer.at(ChannelID).Waveform + i));
     }
   }
 
   return;
 }
 
-void Event::SetFilterValidation(unsigned int userNumberOfEventForFilterValidation) {
+void Event::SetValidation(unsigned int userNumberOfEventForValidation) {
   if (RawWaveformExistFlag) {
-    FilterValidationFlag = true;
-    NumberOfEventForFilterValidation = userNumberOfEventForFilterValidation;
+    ValidationFlag = true;
+    NumberOfEventForValidation = userNumberOfEventForValidation;
     return;
   } else {
     std::cout << "\t WARNING: Raw waveforms are not saved in the decoding process." << std::endl;
     std::cout << "\t Waveform filter validation needs raw waveforms as an input. " << std::endl;
-    std::cout << "\t Turning off the <FilterValidationFlag>. " << std::endl;
+    std::cout << "\t Turning off the <ValidationFlag>. " << std::endl;
     std::cout << "\t Please re-run the decoding and call <SetSaveRawWaveform()>. " << std::endl << std::endl;
     return;
   }
 }
 
-void Event::MakeFilterValidationPlots() {
+void Event::MakeValidationPlots() {
   for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
     if (DataFoundInChannel[ChannelID]) {
-      DrawFilterValidationPlotsForChannel(ChannelID);
+      TCanvas* cValidation = new TCanvas();
+      cValidation->Divide(1, 2);
+      cValidation->cd(1);
+      DrawFilterValidationPlots(ChannelID)->Draw("APL");
+      cValidation->cd(2);
+      DrawVoltageSampleHistogram(ChannelID)->Draw();
+      cValidation->SaveAs(Form("./ValidationPlots/Evt%i_Ch%i.eps", CurrentEventIndex, ChannelID + 1));
     }
   }
 
   return;
 }
 
-void Event::DrawFilterValidationPlotsForChannel(unsigned int ChannelID) {
-  TGraph* grWaveform     = new TGraph(1024, GetTimeChannel(ChannelID), GetWaveformChannel(ChannelID));
-  TGraph* grRawWaveform  = new TGraph(1024, GetTimeChannel(ChannelID), GetRawWaveformChannel(ChannelID));
-  TGraph* grDerivative   = new TGraph(1024, GetTimeChannel(ChannelID), GetDerivativeWaveformChannel(ChannelID));
+TMultiGraph* Event::DrawFilterValidationPlots(unsigned int ChannelID) {
+  TGraph* grWaveform     = new TGraph(1024, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->Waveform);
+  TGraph* grRawWaveform  = new TGraph(1024, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->RawWaveform);
+  TGraph* grDerivative   = new TGraph(1024, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->DerivativeWaveform);
 
   grWaveform->SetLineColor(kRed);
   grDerivative->SetLineColor(kBlue);
-  TMultiGraph *mgrMultiWaveform = new TMultiGraph();
+  TMultiGraph* mgrMultiWaveform = new TMultiGraph();
   mgrMultiWaveform->Add(grDerivative,  "l");
   mgrMultiWaveform->Add(grRawWaveform, "l");
   mgrMultiWaveform->Add(grWaveform,    "l");
-  TCanvas* cMultiWaveform = new TCanvas();
   mgrMultiWaveform->Draw("APL");
+  mgrMultiWaveform->SetTitle("Waveform display");
   mgrMultiWaveform->GetXaxis()->SetTitle("Time [ns]");
   mgrMultiWaveform->GetYaxis()->SetTitle("Voltage [V]");
 
-  const int CreateDirectoryError = mkdir("./ValidationPlots", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  cMultiWaveform->SaveAs(Form("./ValidationPlots/FilterValidation_evt%i_ch%i.eps", CurrentEventIndex, ChannelID + 1));
-
-  return;
+  return mgrMultiWaveform;
 }
 
-Double_t* Event::GetTimeChannel(unsigned int ChannelID) {
-  switch (ChannelID) {
-    case 0: {
-      return &TimeChannel1[0];
-      break;
-    }
-    case 1: {
-      return &TimeChannel2[0];
-      break;
-    }
-    case 2: {
-      return &TimeChannel3[0];
-      break;
-    }
-    case 3: {
-      return &TimeChannel4[0];
-      break;
-    }
-  }
+TH1D* Event::DrawVoltageSampleHistogram(unsigned int ChannelID) {
+  GetChannel(ChannelID)->hVoltageSampleHistogram->SetTitle("Histogram of voltage samples");
+  GetChannel(ChannelID)->hVoltageSampleHistogram->GetXaxis()->SetTitle("Voltage [V]");
+  GetChannel(ChannelID)->hVoltageSampleHistogram->GetYaxis()->SetTitle("Entries");
+
+  return GetChannel(ChannelID)->hVoltageSampleHistogram;
 }
 
-Double_t* Event::GetWaveformChannel(unsigned int ChannelID) {
-  switch (ChannelID) {
-    case 0: {
-      return &WaveformChannel1[0];
-    }
-    case 1: {
-      return &WaveformChannel2[0];
-    }
-    case 2: {
-      return &WaveformChannel3[0];
-    }
-    case 3: {
-      return &WaveformChannel4[0];
-    }
-  }
-}
-
-Double_t* Event::GetRawWaveformChannel(unsigned int ChannelID) {
-  switch (ChannelID) {
-    case 0: {
-      return &RawWaveformChannel1[0];
-    }
-    case 1: {
-      return &RawWaveformChannel2[0];
-    }
-    case 2: {
-      return &RawWaveformChannel3[0];
-    }
-    case 3: {
-      return &RawWaveformChannel4[0];
-    }
-  }
-}
-
-Double_t* Event::GetDerivativeWaveformChannel(unsigned int ChannelID) {
-  switch (ChannelID) {
-    case 0: {
-      return &DerivativeWaveformChannel1[0];
-    }
-    case 1: {
-      return &DerivativeWaveformChannel2[0];
-    }
-    case 2: {
-      return &DerivativeWaveformChannel3[0];
-    }
-    case 3: {
-      return &DerivativeWaveformChannel4[0];
-    }
-  }
+CHANNEL* Event::GetChannel(unsigned int ChannelID) {
+  return &ChannelContainer.at(ChannelID);
 }

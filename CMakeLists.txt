@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 project(AnalysisChain)
 #---Compiler options control
-set (CMAKE_CXX_FLAGS "-g -w -std=c++11")
+set (CMAKE_CXX_FLAGS "-g -w -std=c++11 -fno-stack-protector")
 
 # You need to tell CMake where to find the ROOT installation.
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})

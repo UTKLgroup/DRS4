@@ -63,7 +63,6 @@ private:
   std::string     ROOTFileName;
 
   GSFilter*       WaveformFilter;
-  GSFilter*       DerivativeFilter;
   bool            FilterFlag = false;
   bool            SaveRawWaveform = false;
   unsigned int    NumberOfFilteringPoints;
