@@ -64,7 +64,7 @@ private:
 
   // Calculate high-level variables
   virtual void     FillVoltageSampleHistogram();
-  //virtual void     FindBaseline();
+  virtual void     FindBaseline();
 
   virtual void          MakeValidationPlots();
   virtual TMultiGraph*  DrawFilterValidationPlots(unsigned int ChannelID);

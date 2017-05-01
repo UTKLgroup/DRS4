@@ -88,7 +88,7 @@ void Event::Run() {
     nb = fChain->GetEntry(CurrentEventIndex);   nbytes += nb;
 
     // Analysis steps start here
-    FillVoltageSampleHistogram();
+    FindBaseline();
     if (CurrentEventIndex < NumberOfEventForValidation) {
       if (ValidationFlag) {
         const int CreateDirectoryError = mkdir("./ValidationPlots", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -112,9 +112,11 @@ void:: Event::EndOfRun() {
 
 void Event::FillVoltageSampleHistogram() {
   for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
-    GetChannel(ChannelID)->hVoltageSampleHistogram->Reset();
-    for (unsigned int i = 0; i < 1024; i++) {
-      GetChannel(ChannelID)->hVoltageSampleHistogram->Fill(*(ChannelContainer.at(ChannelID).Waveform + i));
+    if (DataFoundInChannel[ChannelID]) {
+      GetChannel(ChannelID)->hVoltageSampleHistogram->Reset();
+      for (unsigned int i = 0; i < 1024; i++) {
+        GetChannel(ChannelID)->hVoltageSampleHistogram->Fill(*(ChannelContainer.at(ChannelID).Waveform + i));
+      }
     }
   }
 
@@ -171,6 +173,7 @@ TMultiGraph* Event::DrawFilterValidationPlots(unsigned int ChannelID) {
 }
 
 TH1D* Event::DrawVoltageSampleHistogram(unsigned int ChannelID) {
+  gStyle->SetOptStat(0);
   GetChannel(ChannelID)->hVoltageSampleHistogram->SetTitle("Histogram of voltage samples");
   GetChannel(ChannelID)->hVoltageSampleHistogram->GetXaxis()->SetTitle("Voltage [V]");
   GetChannel(ChannelID)->hVoltageSampleHistogram->GetYaxis()->SetTitle("Entries");
@@ -180,4 +183,27 @@ TH1D* Event::DrawVoltageSampleHistogram(unsigned int ChannelID) {
 
 CHANNEL* Event::GetChannel(unsigned int ChannelID) {
   return &ChannelContainer.at(ChannelID);
+}
+
+void Event::FindBaseline() {
+  FillVoltageSampleHistogram();
+
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    TH1D* h = GetChannel(ChannelID)->hVoltageSampleHistogram;
+    if (DataFoundInChannel[ChannelID]) {
+      unsigned int iBin = h->FindBin(0.002);
+      unsigned int maxBinContent = 0;
+      unsigned int maxBinCenter;
+      while (h->GetBinCenter(iBin) > -0.006) {
+        if (maxBinContent < h->GetBinContent(iBin)) {
+          maxBinContent = h->GetBinContent(iBin);
+          maxBinCenter  = iBin;
+        }
+        iBin--;
+      }
+      GetChannel(ChannelID)->Baseline = h->GetBinCenter(maxBinCenter);
+    }
+  }
+
+  return;
 }
