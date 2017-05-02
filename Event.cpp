@@ -17,7 +17,6 @@ Event::~Event() {
   delete fChain->GetCurrentFile();
 }
 
-
 Long64_t Event::LoadTree(Long64_t entry) {
   // Set the environment to read one entry
   if (!fChain) return -5;
@@ -45,7 +44,7 @@ void Event::InitiateChannelContainer() {
     GetChannel(ChannelID)->DerivativeWaveformBranchName = "DerivativeWaveformChannel" + ChannelStringStream.str();
 
     std::string hName = "hVoltageSampleHistogramChannel" + ChannelStringStream.str();
-    GetChannel(ChannelID)->hVoltageSampleHistogram = new TH1D(hName.c_str(), "Voltage samples histogram", 6000, -.52, .02);
+    GetChannel(ChannelID)->hVoltageSampleHistogram = new TH1D(hName.c_str(), "Voltage samples histogram", 200, -.006, .002);
   }
 
   return;
@@ -77,6 +76,26 @@ void Event::Init(TTree *tree) {
   return;
 }
 
+void Event::CheckWaveformCutoff() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID]) {
+      int nLocationsAtMaxVoltage = 0;
+      for (unsigned int i = 0; i < NADC; i++) {
+        if ((GetChannel(ChannelID)->Waveform)[i] <= -0.5) {
+          nLocationsAtMaxVoltage++;
+        }
+      }
+      if (nLocationsAtMaxVoltage >= maxNADCToBeConsiderCutoff) {
+        *(GetChannel(ChannelID)->WaveformCutoff) = true;
+      } else {
+        *(GetChannel(ChannelID)->WaveformCutoff) = false;
+      }
+    }
+  }
+
+  return;
+}
+
 void Event::Run() {
   if (fChain == 0) return;
   TotalNumberOfEvents = fChain->GetEntriesFast();
@@ -87,8 +106,10 @@ void Event::Run() {
     if (ientry < 0) break;
     nb = fChain->GetEntry(CurrentEventIndex);   nbytes += nb;
 
+    CheckWaveformCutoff();
     // Analysis steps start here
-    FindBaseline();
+    FindTimeInfo();
+    FindBaselineInfo();
     if (CurrentEventIndex < NumberOfEventForValidation) {
       if (ValidationFlag) {
         const int CreateDirectoryError = mkdir("./ValidationPlots", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -112,9 +133,9 @@ void:: Event::EndOfRun() {
 
 void Event::FillVoltageSampleHistogram() {
   for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
-    if (DataFoundInChannel[ChannelID]) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
       GetChannel(ChannelID)->hVoltageSampleHistogram->Reset();
-      for (unsigned int i = 0; i < 1024; i++) {
+      for (unsigned int i = 0; i < GetChannel(ChannelID)->LocationOfVoltageDrop; i++) {
         GetChannel(ChannelID)->hVoltageSampleHistogram->Fill(*(ChannelContainer.at(ChannelID).Waveform + i));
       }
     }
@@ -139,20 +160,49 @@ void Event::SetValidation(unsigned int userNumberOfEventForValidation) {
 
 void Event::MakeValidationPlots() {
   for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
-    if (DataFoundInChannel[ChannelID]) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
       TCanvas* cValidation = new TCanvas();
       cValidation->Divide(1, 2);
       cValidation->cd(1);
-      DrawFilterValidationPlots(ChannelID)->Draw("APL");
-      // Draw a line to indicate the baseline of the waveform
-      double yBaseline = GetChannel(ChannelID)->Baseline;
-      double xMin      = GetChannel(ChannelID)->Time[0];
-      double xMax      = GetChannel(ChannelID)->Time[1023];
-      TLine *theBaseline = new TLine(xMin, yBaseline, xMax, yBaseline);
-      theBaseline->SetLineColor(kGreen);
-      theBaseline->Draw();
+      { // First pad
+        DrawFilterValidationPlots(ChannelID)->Draw("APL");
+        // Draw a line to indicate the baseline of the waveform
+        double yBaseline      = GetChannel(ChannelID)->Baseline;
+        double yBaselinePlus  = GetChannel(ChannelID)->Baseline + (2 * GetChannel(ChannelID)->BaselineRMS);
+        double yBaselineMinus = GetChannel(ChannelID)->Baseline - (2 * GetChannel(ChannelID)->BaselineRMS);
+        double xBaselineMin     = GetChannel(ChannelID)->Time[0];
+        double xBaselineMax     = GetChannel(ChannelID)->Time[NADC - 1];
+        TLine *theBaseline      = new TLine(xBaselineMin, yBaseline, xBaselineMax, yBaseline);
+        TLine *theBaselinePlus  = new TLine(xBaselineMin, yBaselinePlus , xBaselineMax, yBaselinePlus);
+        TLine *theBaselineMinus = new TLine(xBaselineMin, yBaselineMinus, xBaselineMax, yBaselineMinus);
+        theBaseline->SetLineColor(kGreen);
+        theBaselinePlus->SetLineColor(kGreen);
+        theBaselineMinus->SetLineColor(kGreen);
+
+        // Draw a line to indicate the peak of the waveforms
+        double yPeakMin     = gPad->GetUymin();
+        double yPeakMax     = gPad->GetUymax();
+        double xPeak        = GetChannel(ChannelID)->TimeOfWaveformPeak;
+        double xDrop        = (GetChannel(ChannelID)->Time)[GetChannel(ChannelID)->LocationOfVoltageDrop];
+        double xRecover     = (GetChannel(ChannelID)->Time)[GetChannel(ChannelID)->LocationOfVoltageRecover];
+        TLine *thePeakLine     = new TLine(xPeak, yPeakMin, xPeak, yPeakMax);
+        TLine *theDropLine     = new TLine(xDrop, yPeakMin, xDrop, yPeakMax);
+        TLine *theRecoverLine  = new TLine(xRecover, yPeakMin, xRecover, yPeakMax);
+        thePeakLine->SetLineColor(kCyan);
+        theDropLine->SetLineColor(kCyan);
+        theRecoverLine->SetLineColor(kCyan);
+
+        theBaseline->Draw();
+        theBaselinePlus->Draw();
+        theBaselineMinus->Draw();
+        thePeakLine->Draw();
+        theDropLine->Draw();
+        theRecoverLine->Draw();
+      }
       cValidation->cd(2);
-      DrawVoltageSampleHistogram(ChannelID)->Draw();
+      { // Second pad
+        DrawVoltageSampleHistogram(ChannelID)->Draw();
+      }
       cValidation->SaveAs(Form("./ValidationPlots/Evt%i_Ch%i.eps", CurrentEventIndex, ChannelID + 1));
     }
   }
@@ -161,9 +211,9 @@ void Event::MakeValidationPlots() {
 }
 
 TMultiGraph* Event::DrawFilterValidationPlots(unsigned int ChannelID) {
-  TGraph* grWaveform     = new TGraph(1024, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->Waveform);
-  TGraph* grRawWaveform  = new TGraph(1024, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->RawWaveform);
-  TGraph* grDerivative   = new TGraph(1024, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->DerivativeWaveform);
+  TGraph* grWaveform     = new TGraph(NADC, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->Waveform);
+  TGraph* grRawWaveform  = new TGraph(NADC, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->RawWaveform);
+  TGraph* grDerivative   = new TGraph(NADC, GetChannel(ChannelID)->Time, GetChannel(ChannelID)->DerivativeWaveform);
 
   grWaveform->SetLineColor(kRed);
   grDerivative->SetLineColor(kBlue);
@@ -195,40 +245,107 @@ CHANNEL* Event::GetChannel(unsigned int ChannelID) {
 
 void Event::FindBaselineInfo() {
   FillVoltageSampleHistogram();
+  FindBaseline();
+  FindBaselineRMS();
 
+  return;
+}
+
+void Event::FindBaseline() {
   for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
-    TH1D* h = GetChannel(ChannelID)->hVoltageSampleHistogram;
-    if (DataFoundInChannel[ChannelID]) {
-      unsigned int iBin = h->FindBin(0.002);
-      unsigned int maxBinContent = 0;
-      unsigned int maxBinCenter;
-      while (h->GetBinCenter(iBin) > -0.006) {
-        if (maxBinContent < h->GetBinContent(iBin)) {
-          maxBinContent = h->GetBinContent(iBin);
-          maxBinCenter  = iBin;
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      TH1D* h = GetChannel(ChannelID)->hVoltageSampleHistogram;
+      GetChannel(ChannelID)->Baseline = h->GetBinCenter(h->GetMaximumBin());
+    }
+  }
+
+  return;
+}
+
+void Event::FindBaselineRMS() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      TH1D* h = GetChannel(ChannelID)->hVoltageSampleHistogram;
+      GetChannel(ChannelID)->BaselineRMS = h->GetRMS();
+    }
+  }
+}
+
+void Event::FindLocationOfWeakformPeak() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      CHANNEL* theChannel = GetChannel(ChannelID);
+      unsigned int LocOfMinDev = 0;
+      unsigned int LocOfMaxDev = 0;
+      double MinDev = 0.;
+      double MaxDev = 0.;
+      for (unsigned int i = 0; i < NADC; i++) {
+        if ((theChannel->DerivativeWaveform)[i] > MaxDev) {
+          MaxDev = (theChannel->DerivativeWaveform)[i];
+          LocOfMaxDev = i;
         }
-        iBin--;
+        if ((theChannel->DerivativeWaveform)[i] < MinDev) {
+          MinDev = (theChannel->DerivativeWaveform)[i];
+          LocOfMinDev = i;
+        }
       }
-      GetChannel(ChannelID)->Baseline = h->GetBinCenter(maxBinCenter);
+      theChannel->LocationOfMinimumDerivative = LocOfMinDev;
+      theChannel->LocationOfMaximumDerivative = LocOfMaxDev;
     }
   }
 
   for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
-    TH1D* h = GetChannel(ChannelID)->hVoltageSampleHistogram;
-    if (DataFoundInChannel[ChannelID]) {
-      unsigned int iBin = h->FindBin(0.002);
-      unsigned int maxBinContent = 0;
-      unsigned int maxBinCenter;
-      while (h->GetBinCenter(iBin) > -0.006) {
-        if (maxBinContent < h->GetBinContent(iBin)) {
-          maxBinContent = h->GetBinContent(iBin);
-          maxBinCenter  = iBin;
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      CHANNEL* theChannel = GetChannel(ChannelID);
+      for (unsigned int i = theChannel->LocationOfMinimumDerivative; i < theChannel->LocationOfMaximumDerivative; i++) {
+        double devSignCheck = (theChannel->DerivativeWaveform)[i] * (theChannel->DerivativeWaveform)[i + 1];
+        if (devSignCheck <= 0) {
+          theChannel->TimeOfWaveformPeak = (theChannel->Time)[i];
+          theChannel->LocationOfWaveformPeak = i;
         }
-        iBin--;
       }
-      GetChannel(ChannelID)->Baseline = h->GetBinCenter(maxBinCenter);
     }
   }
+
+  return;
+}
+
+void Event::FindLocationOfVoltageDrop() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      CHANNEL* theChannel = GetChannel(ChannelID);
+      for (int i = theChannel->LocationOfMinimumDerivative; i > 0; i--) {
+        if ((theChannel->DerivativeWaveform)[i] >= -0.0001) {
+          theChannel->LocationOfVoltageDrop = i;
+          i = -1;
+        }
+      }
+    }
+  }
+
+  return;
+}
+
+void Event::FindLocationOfVoltageRecover() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      CHANNEL* theChannel = GetChannel(ChannelID);
+      for (unsigned int i = theChannel->LocationOfMaximumDerivative; i < NADC; i++) {
+        if ((theChannel->DerivativeWaveform)[i] <= 0.0) {
+          theChannel->LocationOfVoltageRecover = i;
+          i = NADC;
+        }
+      }
+    }
+  }
+
+  return;
+}
+
+void Event::FindTimeInfo() {
+  FindLocationOfWeakformPeak();
+  FindLocationOfVoltageDrop();
+  FindLocationOfVoltageRecover();
 
   return;
 }

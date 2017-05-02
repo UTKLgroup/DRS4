@@ -165,31 +165,31 @@ void Decode::AccessEventHeader() {
         break;
       }
       int ChannelIndex = Header[3] - '0' - 1;
-      fread(Voltage, sizeof(short), 1024, DataFile);
+      fread(Voltage, sizeof(short), NADC, DataFile);
 
-      for (int m = 0; m < 1024; m++) {
+      for (int m = 0; m < NADC; m++) {
         // Convert data to volts
         Waveform[ChannelIndex][m] = (Voltage[m] / 65536. - 0.5);
         // Calculate time for this cell
         Time[ChannelIndex][m] = 0;
         for (int j = 0; j < m; j++) {
-          Time[ChannelIndex][m] += TimeBinWidth[ChannelIndex][(j + EventHeader.TriggerCellValue) % 1024];
+          Time[ChannelIndex][m] += TimeBinWidth[ChannelIndex][(j + EventHeader.TriggerCellValue) % NADC];
         }
       }
 
       if (FilterFlag) {
-        double TimeBinWidthOfCurrentEvent = (Time[ChannelID][1023] - Time[ChannelID][0]) / 1023;
+        double TimeBinWidthOfCurrentEvent = (Time[ChannelID][NADC - 1] - Time[ChannelID][0]) / (NADC - 1);
         WaveformFilter->Filter(&Waveform[ChannelID][0], &FilteredWaveform[ChannelID][0]);
         WaveformFilter->FirstDerivative(&FilteredWaveform[ChannelID][0], &FirstDerivativeOfWaveform[ChannelID][0], TimeBinWidthOfCurrentEvent);
       }
     }
 
     // Align cell #0 of all channels
-    double T1 = Time[0][(1024 - EventHeader.TriggerCellValue) % 1024];
+    double T1 = Time[0][(NADC - EventHeader.TriggerCellValue) % NADC];
     for (int ChannelID = 1; ChannelID < 4; ChannelID++) {
-      double T2 = Time[ChannelID][(1024 - EventHeader.TriggerCellValue) % 1024];
+      double T2 = Time[ChannelID][(NADC - EventHeader.TriggerCellValue) % NADC];
       double DT = T1 - T2;
-      for (int l = 0; l < 1024; l++) {
+      for (int l = 0; l < NADC; l++) {
         Time[ChannelID][l] += DT;
       }
     }

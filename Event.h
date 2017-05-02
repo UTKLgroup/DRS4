@@ -1,6 +1,8 @@
 #ifndef Event_h
 #define Event_h
 
+#include "Decode.h"
+
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
@@ -15,6 +17,7 @@
 #include <TCanvas.h>
 #include <TString.h>
 #include <TLine.h>
+#include <TMath.h>
 
 struct CHANNEL {
   std::string TimeBranchName;
@@ -25,13 +28,20 @@ struct CHANNEL {
   TBranch*    b_WaveformChannel;
   TBranch*    b_RawWaveformChannel;
   TBranch*    b_DerivativeWaveformChannel;
-  Double_t    Time[1024];
-  Double_t    Waveform[1024];
-  Double_t    RawWaveform[1024];
-  Double_t    DerivativeWaveform[1024];
+  Double_t    Time[NADC];
+  Double_t    Waveform[NADC];
+  Double_t    RawWaveform[NADC];
+  Double_t    DerivativeWaveform[NADC];
   TH1D*       hVoltageSampleHistogram;
   double      Baseline;
   double      BaselineRMS;
+  unsigned int      LocationOfMinimumDerivative;
+  unsigned int      LocationOfMaximumDerivative;
+  unsigned int      LocationOfWaveformPeak;
+  double            TimeOfWaveformPeak;
+  unsigned int      LocationOfVoltageDrop;
+  unsigned int      LocationOfVoltageRecover;
+  bool*             WaveformCutoff;
 };
 
 class Event {
@@ -51,6 +61,8 @@ private:
   bool            ValidationFlag = false;
   unsigned int    NumberOfEventForValidation;
 
+  int maxNADCToBeConsiderCutoff = (int)(NADC / 100) + 1;
+
   virtual void    EndOfRun();
 
   virtual void    InitiateChannelContainer();
@@ -63,9 +75,19 @@ private:
 
   Long64_t         CurrentEventIndex;
 
+  virtual void     CheckWaveformCutoff();
+
   // Calculate high-level variables
-  virtual void     FillVoltageSampleHistogram();
   virtual void     FindBaselineInfo();
+  virtual void     FillVoltageSampleHistogram();
+  virtual void     FindBaseline();
+  virtual void     FindBaselineRMS();
+
+  virtual void     FindTimeInfo();
+  virtual void     FindLocationOfWeakformPeak();
+  virtual void     FindLocationOfVoltageDrop();
+  virtual void     FindLocationOfVoltageRecover();
+
 
   virtual void          MakeValidationPlots();
   virtual TMultiGraph*  DrawFilterValidationPlots(unsigned int ChannelID);

@@ -6,6 +6,10 @@
 #ifndef Decode_H
 #define Decode_H
 
+#ifndef Event_H
+const unsigned int NADC = 1024;
+#endif
+
 #include <iostream>
 #include <cstring>
 #include <array>
@@ -40,8 +44,8 @@ struct EVENTHEADER {
 };
 
 struct WAVEFORM {
-  double Waveform[4][1024];
-  double Time[4][1024];
+  double Waveform[4][NADC];
+  double Time[4][NADC];
 };
 
 class Decode {
@@ -74,12 +78,12 @@ private:
   EVENTHEADER     EventHeader;
 
   char            Header[4];
-  unsigned short  Voltage[1024];
-  double          Waveform[4][1024];
-  double          FilteredWaveform[4][1024];
-  double          FirstDerivativeOfWaveform[4][1024];
-  double          Time[4][1024];
-  float           TimeBinWidth[4][1024];
+  unsigned short  Voltage[NADC];
+  double          Waveform[4][NADC];
+  double          FilteredWaveform[4][NADC];
+  double          FirstDerivativeOfWaveform[4][NADC];
+  double          Time[4][NADC];
+  float           TimeBinWidth[4][NADC];
 
   bool            DataFoundInChannel[4] = {false, false, false, false};
 };
