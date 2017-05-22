@@ -167,9 +167,9 @@ void Event::MakeValidationPlots() {
       { // First pad
         DrawFilterValidationPlots(ChannelID)->Draw("APL");
         // Draw a line to indicate the baseline of the waveform
-        double yBaseline      = GetChannel(ChannelID)->Baseline;
-        double yBaselinePlus  = GetChannel(ChannelID)->Baseline + (2 * GetChannel(ChannelID)->BaselineRMS);
-        double yBaselineMinus = GetChannel(ChannelID)->Baseline - (2 * GetChannel(ChannelID)->BaselineRMS);
+        double yBaseline      	= GetChannel(ChannelID)->Baseline;
+        double yBaselinePlus  	= GetChannel(ChannelID)->Baseline + (2 * GetChannel(ChannelID)->BaselineRMS);
+        double yBaselineMinus 	= GetChannel(ChannelID)->Baseline - (2 * GetChannel(ChannelID)->BaselineRMS);
         double xBaselineMin     = GetChannel(ChannelID)->Time[0];
         double xBaselineMax     = GetChannel(ChannelID)->Time[NADC - 1];
         TLine *theBaseline      = new TLine(xBaselineMin, yBaseline, xBaselineMax, yBaseline);
@@ -203,7 +203,7 @@ void Event::MakeValidationPlots() {
       { // Second pad
         DrawVoltageSampleHistogram(ChannelID)->Draw();
       }
-      cValidation->SaveAs(Form("./ValidationPlots/Evt%i_Ch%i.eps", CurrentEventIndex, ChannelID + 1));
+      cValidation->SaveAs(Form("./ValidationPlots/Evt%i_Ch%i.png", CurrentEventIndex, ChannelID + 1));
     }
   }
 

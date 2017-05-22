@@ -79,7 +79,7 @@ private:
 
   // Calculate high-level variables
   virtual void     FindBaselineInfo();
-  virtual void     FillVoltageSampleHistogram();
+  virtual void     FillVoltageSampleHistogram(); // to find baseline
   virtual void     FindBaseline();
   virtual void     FindBaselineRMS();
 
