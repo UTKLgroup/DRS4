@@ -25,12 +25,12 @@ target_link_libraries(GSFilter ${ROOT_LIBRARIES})
 add_library(Decode SHARED Decode.cpp)
 target_link_libraries(Decode GSFilter ${ROOT_LIBRARIES})
 
-add_library(Event SHARED Event.cpp)
-target_link_libraries(Event ${ROOT_LIBRARIES})
+add_library(Event SHARED PSDSingleChannel.cpp)
+target_link_libraries(PSDSingleChannel ${ROOT_LIBRARIES})
 
 #---Create a main program using the library
 add_executable(AnalysisChain AnalysisChain.cpp)
-target_link_libraries(AnalysisChain Decode Event)
+target_link_libraries(AnalysisChain Decode PSDSingleChannel)
 
 #---Copy data file over the build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/example.bin

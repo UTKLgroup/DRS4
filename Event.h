@@ -35,6 +35,9 @@ struct CHANNEL {
   TH1D*       hVoltageSampleHistogram;
   double      Baseline;
   double      BaselineRMS;
+	double 			WaveformArea;
+	double 			WaveformTailArea;
+	double 			ChargeRatio;
   unsigned int      LocationOfMinimumDerivative;
   unsigned int      LocationOfMaximumDerivative;
   unsigned int      LocationOfWaveformPeak;
@@ -88,6 +91,10 @@ private:
   virtual void     FindLocationOfVoltageDrop();
   virtual void     FindLocationOfVoltageRecover();
 
+	virtual void 		 FindChargeInfo();
+	virtual void 		 FindWaveformArea();
+	virtual void 		 FindWaveformTailArea();
+	virtual void 		 FindChargeRatio();
 
   virtual void          MakeValidationPlots();
   virtual TMultiGraph*  DrawFilterValidationPlots(unsigned int ChannelID);

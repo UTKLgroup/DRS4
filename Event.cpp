@@ -110,6 +110,7 @@ void Event::Run() {
     // Analysis steps start here
     FindTimeInfo();
     FindBaselineInfo();
+		//FindChargeInfo();
     if (CurrentEventIndex < NumberOfEventForValidation) {
       if (ValidationFlag) {
         const int CreateDirectoryError = mkdir("./ValidationPlots", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -346,6 +347,57 @@ void Event::FindTimeInfo() {
   FindLocationOfWeakformPeak();
   FindLocationOfVoltageDrop();
   FindLocationOfVoltageRecover();
+
+  return;
+}
+
+void Event::FindWaveformTailArea() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      CHANNEL* theChannel = GetChannel(ChannelID);
+			theChannel->WaveformTailArea = 0;
+      for (unsigned int i = theChannel->LocationOfVoltageRecover; i < NADC; i++) {
+				if (i < NADC - 1) {
+					theChannel->WaveformTailArea += theChannel->Waveform[i]*(theChannel->Time[i + 1] - theChannel->Time[i]);
+				}
+      }
+    }
+  }
+
+  return;
+}
+
+void Event::FindWaveformArea() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      CHANNEL* theChannel = GetChannel(ChannelID);
+			theChannel->WaveformArea = 0;
+      for (unsigned int i = theChannel->LocationOfVoltageRecover; i < NADC; i++) {
+				if (i < NADC - 1) {
+					theChannel->WaveformArea += theChannel->Waveform[i]*(theChannel->Time[i + 1] - theChannel->Time[i]);
+				}
+      }
+    }
+  }
+
+  return;
+}
+
+void Event::FindChargeRatio() {
+  for (unsigned int ChannelID = 0; ChannelID < 4; ChannelID++) {
+    if (DataFoundInChannel[ChannelID] && !(*(GetChannel(ChannelID)->WaveformCutoff))) {
+      CHANNEL* theChannel = GetChannel(ChannelID);
+			theChannel->ChargeRatio = theChannel->WaveformTailArea / theChannel->WaveformArea;
+    }
+  }
+
+  return;
+}
+
+void Event::FindChargeInfo() {
+  //FindWaveformArea();
+	//FindWaveformTailArea();
+	//FindChargeRatio();
 
   return;
 }
