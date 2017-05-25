@@ -25,7 +25,7 @@ target_link_libraries(GSFilter ${ROOT_LIBRARIES})
 add_library(Decode SHARED Decode.cpp)
 target_link_libraries(Decode GSFilter ${ROOT_LIBRARIES})
 
-add_library(Event SHARED PSDSingleChannel.cpp)
+add_library(PSDSingleChannel SHARED PSDSingleChannel.cpp)
 target_link_libraries(PSDSingleChannel ${ROOT_LIBRARIES})
 
 #---Create a main program using the library

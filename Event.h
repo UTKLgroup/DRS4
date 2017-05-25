@@ -80,25 +80,6 @@ private:
 
   virtual void     CheckWaveformCutoff();
 
-  // Calculate high-level variables
-  virtual void     FindBaselineInfo();
-  virtual void     FillVoltageSampleHistogram(); // to find baseline
-  virtual void     FindBaseline();
-  virtual void     FindBaselineRMS();
-
-  virtual void     FindTimeInfo();
-  virtual void     FindLocationOfWeakformPeak();
-  virtual void     FindLocationOfVoltageDrop();
-  virtual void     FindLocationOfVoltageRecover();
-
-	virtual void 		 FindChargeInfo();
-	virtual void 		 FindWaveformArea();
-	virtual void 		 FindWaveformTailArea();
-	virtual void 		 FindChargeRatio();
-
-  virtual void          MakeValidationPlots();
-  virtual TMultiGraph*  DrawFilterValidationPlots(unsigned int ChannelID);
-  virtual TH1D*         DrawVoltageSampleHistogram(unsigned int ChannelID);
 };
 
 #endif // ifndef Event_h

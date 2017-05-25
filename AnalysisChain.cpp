@@ -22,9 +22,9 @@ int main(int argc, char *argv[]) {
     DataSet1->SetFilter(25, 4);
     DataSet1->SetSaveRawWaveform();
     DataSet1->Run();
-    PSDSingleChannel* PSDDataSet1 = new Event(DataSet1->GetROOTFileName());
-    PSDDataSet1->SetValidation(50);
-    PSDDataSet1->Run();
+    PSDSingleChannel* PSDDataSet1 = new PSDSingleChannel(DataSet1->GetROOTFileName());
+    PSDDataSet1->SetValidation(30);
+    PSDDataSet1->Loop();
   }
 
   return 0;
